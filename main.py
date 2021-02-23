@@ -25,7 +25,7 @@ def get_apex_rank(name):
 # Discord
 CLIENT_ID = 786029312788791346
 PUBLIC_KEY = '5abb7a5d430e5158b68b6b217f4ac1bc0e5065c0a3093ccdad53ede613869390'
-TOKEN = "Nzg2MDI5MzEyNzg4NzkxMzQ2.X9Ac1w.wlpfZddyW7tHexUuAGHbWIvWjSE"
+TOKEN = "Nzg2MDI5MzEyNzg4NzkxMzQ2.X9Ac1w.TRZVEdtnSA4NyTh0Yyo-pXmi1a4"
 CLIENT_SECRET = "nblp34-XOk8gO4vhOs4e4fxQYShoKYIi"
 APEX_ROLES = ['Bronze 1', 'Bronze 2', 'Bronze 3', 'Bronze 4', 'Silver 1', 'Silver 2', 'Silver 3', 'Silver 4', "Gold 1",
               "Gold 2", "Gold 3", "Gold 4"]
