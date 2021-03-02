@@ -3,6 +3,12 @@ from discord.ext import commands
 import requests
 from discord.utils import get
 import datetime
+from models import DiscordUser
+
+
+
+from sqlalchemy import create_engine
+
 
 """name  - epiz_27963539,  pass -o8vSQ3DjMGQ, host name - sql105.epizy.com, data_name - epiz_27963539_tpgdatabace,"""
 "https://discord.com/api/oauth2/authorize?client_id=786029312788791346&permissions=2014313665&scope=bot"
@@ -35,7 +41,7 @@ intents = discord.Intents.default()
 intents.members = True
 client = commands.Bot(command_prefix='!', intents=intents)
 BOT_COMAND_channels = ["bot_command", "основной"]
-BOT_COMAND_channels_ID = ["788693067757781023", "816196162520219659"]
+BOT_COMAND_channels_ID = ["788693067757781023", "816203477801762836"]
 
 @client.event
 async def on_ready():
@@ -67,7 +73,7 @@ async def users(ctx, user_status=None):
 
 
 @client.command()
-async def rank(ctx, user_name):
+async def rank(ctx, user_name=None):
     if str(ctx.channel.id) in BOT_COMAND_channels_ID:
 
         # Check status of user rank, -1 if name wasn't found
@@ -145,21 +151,20 @@ async def on_raw_reaction_add(payload):
         message = await channel.fetch_message(payload.message_id)
         reaction = get(message.reactions)
         if str(payload.user_id) != "786029312788791346" and str(payload.emoji.name) == "✅":
-            data_log = {"member_added_reaction": {"member_name": str(member), "id": str(user_id)},
+            data_log = {"member_added_reaction": {"member_name": str(member),
+                                                  "author_nick": str(member.nick),
+                                                  "id": str(user_id)},
                         "message_data": {
                             "message_id": str(message_id),
                             "message_author": str(msg.author),
                             "author_id": str(author.id),
+                            "author_nick": str(author.nick),
                             "reaction_count": str(reaction.count),
                             "message_data": str(msg.content),
                         }
                         }
-            # print(f"member added reaction - {member}, id {user_id}")
-            # print(f"message_id - {message_id}")
-            # print(f"msg author - {msg.author}, id - {author.id}")
-            # print(f"channel_id - {channel_id}")
-            # print(f"reaction.count - {reaction.count} \n")
-            # print(f"Message - {msg.content} \n")
+            adduser = DiscordUser(member_name=member, member_id=user_id, member_nickname=member.nick)
+
             embed = discord.Embed(colour=discord.Colour(0xe083b), description=str(data_log))
             await channel.send(embed=embed)
 
