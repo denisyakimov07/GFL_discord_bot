@@ -190,12 +190,13 @@ async def on_raw_reaction_add(payload):
                                    message_author_id=int(author.id),
                                    admin_user_id=int(user_id),
                                    discord_message_id=message_id)
+            print(f"{member.avatar_url}")
             try:
                 session.add(medea_post)
                 session.commit()
                 print(f"{MediaPost}--CREATE")
 
-                embed = discord.Embed(title=f"{message_id}",
+                embed = discord.Embed(title=f"Message id - {message_id}",
                                       colour=discord.Colour(0x18617), url="https://discordapp.com",
                                       description=f" ```\n{msg.content.replace('!submit', '')}```",
                                       timestamp=datetime.datetime.utcfromtimestamp(1614909210))
@@ -276,7 +277,10 @@ async def submit(ctx):
 
 def discord_user_create(checkuser, session):
     user_stat = session.query(exists().where(DiscordUser.member_id == checkuser.member_id)).scalar()
-    if not user_stat:
+    if user_stat:
+        user_check = session.query(DiscordUser).filter_by(member_id=checkuser.member_id).first()
+
+    else:
         session.add(checkuser)
 
 

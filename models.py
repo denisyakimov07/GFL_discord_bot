@@ -15,9 +15,10 @@ class DiscordUser(BaseModel):
     member_id = Column(BigInteger)
     member_nickname = Column(String(50))
     create_time = Column(DateTime, default=datetime.datetime.now)
+    avatar_url = Column(Text)
 
     def __repr__(self):
-        return f"{self.member_name} - {self.member_id} - {self.member_nickname} "
+        return f"{self.member_name} - {self.member_id} - {self.member_nickname}"
 
 
 class MediaPost(BaseModel):
