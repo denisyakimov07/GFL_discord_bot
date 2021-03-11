@@ -30,7 +30,7 @@ Session = sessionmaker(bind=engine)
 
 @client.event
 async def on_ready():
-    print('ready-v0.01')
+    print('ready-v0.02')
 
 
 """Server role manager"""
