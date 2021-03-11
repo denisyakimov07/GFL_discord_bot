@@ -10,6 +10,7 @@ from sqlalchemy.orm import sessionmaker, query
 import config
 from models import DiscordUser, MediaPost
 from apex_api import get_apex_rank
+from welcome_message import WELCOME_MESSAGE
 
 intents = discord.Intents.default()
 intents.members = True
@@ -79,21 +80,15 @@ async def on_raw_reaction_add(payload):
             channel = client.get_channel(channel_id)
             message = await channel.fetch_message(payload.message_id)
             role = discord.utils.get(member.guild.roles, id=VERIFY_ROLE_ID)
-
-            await message.delete()
+            await author.send(f"{WELCOME_MESSAGE}")
             await author.add_roles(role)
+            await message.delete()
 
             success_embed = discord.Embed(colour=discord.Colour(0x8aff02), description="```\n✅ User verified.```")
 
             success_embed.set_author(name=f"{author}", icon_url=f"{author.avatar_url}")
             success_embed.set_footer(text=f"{member}", icon_url=f"{member.avatar_url}")
             await channel.send(embed=success_embed)
-
-            # success_embed = discord.Embed(colour=discord.Colour(0x7ed321),
-            #                               description="✅ User get verified.",
-            #                               timestamp=datetime.datetime.utcfromtimestamp(1615421803))
-            # success_embed.set_footer(text=f"{author}", icon_url=f"{author.avatar_url}")
-            # await channel.send(embed=success_embed)
 
 
 @client.command()
