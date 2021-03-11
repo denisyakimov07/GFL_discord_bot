@@ -1,0 +1,3 @@
+embed = discord.Embed(colour=discord.Colour(0xff2f), description="this supports ly shown subset of markdown. ")
+
+await bot.say(embed=embed)

@@ -75,20 +75,68 @@ async def on_raw_reaction_add(payload):
         intersection_roles = set(roles_user_list) & set(ROLE_ALLOWED_TO_VERIFY_ID)
         author = msg.author
         member = payload.member
+
         if int(payload.user_id) != BOT_ID and str(payload.emoji.name) == "✅" and len(intersection_roles) > 0:
             channel_id = payload.channel_id
             channel = client.get_channel(channel_id)
             message = await channel.fetch_message(payload.message_id)
             role = discord.utils.get(member.guild.roles, id=VERIFY_ROLE_ID)
-            await author.send(f"{WELCOME_MESSAGE}")
+
+            # await author.send(f"{WELCOME_MESSAGE}")
             await author.add_roles(role)
             await message.delete()
 
             success_embed = discord.Embed(colour=discord.Colour(0x8aff02), description="```\n✅ User verified.```")
-
             success_embed.set_author(name=f"{author}", icon_url=f"{author.avatar_url}")
             success_embed.set_footer(text=f"{member}", icon_url=f"{member.avatar_url}")
             await channel.send(embed=success_embed)
+
+
+"""Log system"""
+GUILD = 696277112600133633
+CHANNELS_LOG = 818756453778063380
+SERVER_LOG = 818756528176627743
+
+
+@client.event
+async def on_voice_state_update(member, before, after):
+    guild = client.get_guild(GUILD)
+    channel = guild.get_channel(CHANNELS_LOG)
+
+    if member.guild.id == GUILD:
+        if not before.channel:
+            join_embed = discord.Embed(colour=discord.Colour(0xff2f),
+                                       description=f"{member} has arrived to {after.channel.name}!")
+            await channel.send(embed=join_embed)
+        if before.channel and not after.channel:
+            left_embed = discord.Embed(colour=discord.Colour(0xff001f),
+                                       description=f"{member} User disconnect!")
+            await channel.send(embed=left_embed)
+
+        if before.channel and after.channel and before.channel != after.channel:
+            switched_embed = discord.Embed(colour=discord.Colour(0xffea00),
+                                           description=f"{member} User switched channel to {after.channel.name}!")
+            await channel.send(embed=switched_embed)
+
+
+@client.event
+async def on_member_join(member):
+    if member.guild.id == GUILD:
+        guild = client.get_guild(GUILD)
+        channel = guild.get_channel(SERVER_LOG)
+        join_to_server_embed = discord.Embed(colour=discord.Colour(0xff2f),
+                                             description=f"{member} has joined the server!")
+        await channel.send(embed=join_to_server_embed)
+
+
+@client.event
+async def on_member_remove(member):
+    if member.guild.id == GUILD:
+        guild = client.get_guild(GUILD)
+        channel = guild.get_channel(SERVER_LOG)
+        join_to_server_embed = discord.Embed(colour=discord.Colour(0xff001f),
+                                             description=f"{member} has left the server!")
+        await channel.send(embed=join_to_server_embed)
 
 
 @client.command()
