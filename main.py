@@ -33,7 +33,7 @@ tzinfo = datetime.timezone(datetime.timedelta(hours=timezone_offset))
 
 @client.event
 async def on_ready():
-    print('ready-v0.03.2')
+    print('ready-v0.03.4')
 
 
 """Server role manager"""
@@ -99,9 +99,10 @@ async def on_raw_reaction_add(payload):
 
 """Log system"""
 GUILD = 696277112600133633
-CHANNELS_LOG = 818756453778063380 #auditlog-voice
-SERVER_LOG = 818756528176627743 #auditlog-join-log
-STREAM_LOG = 819783521907638344 #auditlog-event
+CHANNELS_LOG = 818756453778063380  # auditlog-voice
+SERVER_LOG = 818756528176627743  # auditlog-join-log
+STREAM_LOG = 819783521907638344  # auditlog-event
+ROLES_LOG = 818756406496067604  # auditlog-roles
 
 
 @client.event
@@ -135,7 +136,6 @@ async def on_voice_state_update(member, before, after):
             switched_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
             await voice_channel.send(embed=switched_embed)
 
-
             """auditlog-event"""
 
         if not before.self_stream and after.self_stream:
@@ -145,13 +145,14 @@ async def on_voice_state_update(member, before, after):
             switched_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
             await stream_channel.send(embed=switched_embed)
 
-        if before.self_stream and not after.self_stream:
+        if before.self_stream and not after.self_stream or not after.channel and after.self_stream:
             switched_embed = discord.Embed(colour=discord.Colour(0xff001f),
                                            timestamp=datetime.datetime.now(tzinfo),
-                                           description=f"{member} User stop stream {after.channel.name}!")
+                                           description=f"{member} User stop stream {before.channel.name}!")
             switched_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
             await stream_channel.send(embed=switched_embed)
 
+            """auditlog-join-log"""
 
 
 @client.event
@@ -172,8 +173,8 @@ async def on_member_remove(member):
         guild = client.get_guild(GUILD)
         channel = guild.get_channel(SERVER_LOG)
         left_server_embed = discord.Embed(colour=discord.Colour(0xff001f),
-                                             timestamp=datetime.datetime.now(tzinfo),
-                                             description=f"{member} has left the server!")
+                                          timestamp=datetime.datetime.now(tzinfo),
+                                          description=f"{member} has left the server!")
         left_server_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
         await channel.send(embed=left_server_embed)
 
@@ -232,7 +233,7 @@ async def rank(ctx, user_name=None):
             embed.set_thumbnail(url=image_url)
             embed.set_author(name=member.name, url="https://discordapp.com",
                              icon_url=member.avatar_url)
-            embed.set_footer(text="footer text", icon_url="https://cdn.discordapp.com/embed/avatars/0.png")
+            embed.set_footer(text="footer private massage", icon_url="https://cdn.discordapp.com/embed/avatars/0.png")
             await ctx.send(embed=embed)
 
 

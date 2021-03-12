@@ -16,3 +16,11 @@ Here is a simple set of rules to follow. More detailed set is being worked on.
 7.    Post content in the correct channels.
 
 8.    Don't post someone's personal information without permission."""
+
+
+
+
+
+
+"""embed = discord.Embed(colour=discord.Colour(0xff2f), description="this supports ly shown subset of markdown. ")
+await bot.say(embed=embed)"""
