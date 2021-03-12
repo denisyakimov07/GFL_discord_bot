@@ -141,14 +141,14 @@ async def on_voice_state_update(member, before, after):
         if not before.self_stream and after.self_stream:
             switched_embed = discord.Embed(colour=discord.Colour(0xff2f),
                                            timestamp=datetime.datetime.now(tzinfo),
-                                           description=f"{member} User start stream {after.channel.name}!")
+                                           description=f"{member} | start stream in {after.channel.name}!")
             switched_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
             await stream_channel.send(embed=switched_embed)
 
         if before.self_stream and not after.self_stream or not after.channel and after.self_stream:
             switched_embed = discord.Embed(colour=discord.Colour(0xff001f),
                                            timestamp=datetime.datetime.now(tzinfo),
-                                           description=f"{member} User stop stream {before.channel.name}!")
+                                           description=f"{member} | stop stream in {before.channel.name}!")
             switched_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
             await stream_channel.send(embed=switched_embed)
 
