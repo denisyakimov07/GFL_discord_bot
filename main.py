@@ -27,6 +27,9 @@ engine_config = f'{config.DB_DATABASE_TYPE}://{config.DB_USER}:{config.DB_PASSWO
 engine = create_engine(engine_config, echo=True)
 Session = sessionmaker(bind=engine)
 
+timezone_offset = 8.0  # Pacific Standard Time (UTC−08:00)
+tzinfo = datetime.timezone(datetime.timedelta(hours=timezone_offset))
+
 
 @client.event
 async def on_ready():
@@ -86,7 +89,9 @@ async def on_raw_reaction_add(payload):
             await author.add_roles(role)
             await message.delete()
 
-            success_embed = discord.Embed(colour=discord.Colour(0x8aff02), description="```\n✅ User verified.```")
+            success_embed = discord.Embed(colour=discord.Colour(0x8aff02),
+                                          description="```\n✅ User verified.```",
+                                          timestamp=datetime.datetime.now(tzinfo))
             success_embed.set_author(name=f"{author}", icon_url=f"{author.avatar_url}")
             success_embed.set_footer(text=f"{member}", icon_url=f"{member.avatar_url}")
             await channel.send(embed=success_embed)
@@ -106,15 +111,18 @@ async def on_voice_state_update(member, before, after):
     if member.guild.id == GUILD:
         if not before.channel:
             join_embed = discord.Embed(colour=discord.Colour(0xff2f),
+                                       timestamp=datetime.datetime.now(tzinfo),
                                        description=f"{member} has arrived to {after.channel.name}!")
             await channel.send(embed=join_embed)
         if before.channel and not after.channel:
             left_embed = discord.Embed(colour=discord.Colour(0xff001f),
+                                       timestamp=datetime.datetime.now(tzinfo),
                                        description=f"{member} User disconnect!")
             await channel.send(embed=left_embed)
 
         if before.channel and after.channel and before.channel != after.channel:
             switched_embed = discord.Embed(colour=discord.Colour(0xffea00),
+                                           timestamp=datetime.datetime.now(tzinfo),
                                            description=f"{member} User switched channel to {after.channel.name}!")
             await channel.send(embed=switched_embed)
 
@@ -125,6 +133,7 @@ async def on_member_join(member):
         guild = client.get_guild(GUILD)
         channel = guild.get_channel(SERVER_LOG)
         join_to_server_embed = discord.Embed(colour=discord.Colour(0xff2f),
+                                             timestamp=datetime.datetime.now(tzinfo),
                                              description=f"{member} has joined the server!")
         await channel.send(embed=join_to_server_embed)
 
@@ -135,6 +144,7 @@ async def on_member_remove(member):
         guild = client.get_guild(GUILD)
         channel = guild.get_channel(SERVER_LOG)
         join_to_server_embed = discord.Embed(colour=discord.Colour(0xff001f),
+                                             timestamp=datetime.datetime.now(tzinfo),
                                              description=f"{member} has left the server!")
         await channel.send(embed=join_to_server_embed)
 
@@ -189,7 +199,7 @@ async def rank(ctx, user_name=None):
             embed.set_image(url=image_url)
             embed = discord.Embed(title=f"Get rank {rank}.",
                                   colour=discord.Colour(0x50feb2), url=user_stat_url,
-                                  timestamp=datetime.datetime.utcfromtimestamp(1613357441))
+                                  timestamp=datetime.datetime.now(tzinfo))
             embed.set_thumbnail(url=image_url)
             embed.set_author(name=member.name, url="https://discordapp.com",
                              icon_url=member.avatar_url)
