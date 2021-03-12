@@ -33,7 +33,7 @@ tzinfo = datetime.timezone(datetime.timedelta(hours=timezone_offset))
 
 @client.event
 async def on_ready():
-    print('ready-v0.03')
+    print('ready-v0.03.2')
 
 
 """Server role manager"""
@@ -61,7 +61,7 @@ async def verify(ctx):
     if len(intersection_roles) > 0:
         embed = discord.Embed(colour=discord.Colour(0xff001e),
                               description="✅ User already verified.",
-                              timestamp=datetime.datetime.utcfromtimestamp(1615421803))
+                              timestamp=datetime.datetime.now(tzinfo))
         embed.set_footer(text=f"{member}", icon_url=f"{member.avatar_url}")
         await ctx.send(embed=embed)
 
@@ -113,17 +113,20 @@ async def on_voice_state_update(member, before, after):
             join_embed = discord.Embed(colour=discord.Colour(0xff2f),
                                        timestamp=datetime.datetime.now(tzinfo),
                                        description=f"{member} has arrived to {after.channel.name}!")
+            join_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
             await channel.send(embed=join_embed)
         if before.channel and not after.channel:
             left_embed = discord.Embed(colour=discord.Colour(0xff001f),
                                        timestamp=datetime.datetime.now(tzinfo),
                                        description=f"{member} User disconnect!")
+            left_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
             await channel.send(embed=left_embed)
 
         if before.channel and after.channel and before.channel != after.channel:
             switched_embed = discord.Embed(colour=discord.Colour(0xffea00),
                                            timestamp=datetime.datetime.now(tzinfo),
                                            description=f"{member} User switched channel to {after.channel.name}!")
+            switched_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
             await channel.send(embed=switched_embed)
 
 
@@ -135,6 +138,7 @@ async def on_member_join(member):
         join_to_server_embed = discord.Embed(colour=discord.Colour(0xff2f),
                                              timestamp=datetime.datetime.now(tzinfo),
                                              description=f"{member} has joined the server!")
+        join_to_server_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
         await channel.send(embed=join_to_server_embed)
 
 
@@ -143,10 +147,11 @@ async def on_member_remove(member):
     if member.guild.id == GUILD:
         guild = client.get_guild(GUILD)
         channel = guild.get_channel(SERVER_LOG)
-        join_to_server_embed = discord.Embed(colour=discord.Colour(0xff001f),
+        left_server_embed = discord.Embed(colour=discord.Colour(0xff001f),
                                              timestamp=datetime.datetime.now(tzinfo),
                                              description=f"{member} has left the server!")
-        await channel.send(embed=join_to_server_embed)
+        left_server_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
+        await channel.send(embed=left_server_embed)
 
 
 @client.command()
