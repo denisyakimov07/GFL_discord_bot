@@ -99,35 +99,59 @@ async def on_raw_reaction_add(payload):
 
 """Log system"""
 GUILD = 696277112600133633
-CHANNELS_LOG = 818756453778063380
-SERVER_LOG = 818756528176627743
+CHANNELS_LOG = 818756453778063380 #auditlog-voice
+SERVER_LOG = 818756528176627743 #auditlog-join-log
+STREAM_LOG = 819783521907638344 #auditlog-event
 
 
 @client.event
 async def on_voice_state_update(member, before, after):
     guild = client.get_guild(GUILD)
-    channel = guild.get_channel(CHANNELS_LOG)
+    voice_channel = guild.get_channel(CHANNELS_LOG)
+    stream_channel = guild.get_channel(STREAM_LOG)
 
     if member.guild.id == GUILD:
+
+        """auditlog-voice"""
+
         if not before.channel:
             join_embed = discord.Embed(colour=discord.Colour(0xff2f),
                                        timestamp=datetime.datetime.now(tzinfo),
                                        description=f"{member} has arrived to {after.channel.name}!")
             join_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
-            await channel.send(embed=join_embed)
+            await voice_channel.send(embed=join_embed)
+
         if before.channel and not after.channel:
             left_embed = discord.Embed(colour=discord.Colour(0xff001f),
                                        timestamp=datetime.datetime.now(tzinfo),
                                        description=f"{member} User disconnect!")
             left_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
-            await channel.send(embed=left_embed)
+            await voice_channel.send(embed=left_embed)
 
         if before.channel and after.channel and before.channel != after.channel:
             switched_embed = discord.Embed(colour=discord.Colour(0xffea00),
                                            timestamp=datetime.datetime.now(tzinfo),
                                            description=f"{member} User switched channel to {after.channel.name}!")
             switched_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
-            await channel.send(embed=switched_embed)
+            await voice_channel.send(embed=switched_embed)
+
+
+            """auditlog-event"""
+
+        if not before.self_stream and after.self_stream:
+            switched_embed = discord.Embed(colour=discord.Colour(0xff2f),
+                                           timestamp=datetime.datetime.now(tzinfo),
+                                           description=f"{member} User start stream {after.channel.name}!")
+            switched_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
+            await stream_channel.send(embed=switched_embed)
+
+        if before.self_stream and not after.self_stream:
+            switched_embed = discord.Embed(colour=discord.Colour(0xff001f),
+                                           timestamp=datetime.datetime.now(tzinfo),
+                                           description=f"{member} User stop stream {after.channel.name}!")
+            switched_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
+            await stream_channel.send(embed=switched_embed)
+
 
 
 @client.event
@@ -135,7 +159,7 @@ async def on_member_join(member):
     if member.guild.id == GUILD:
         guild = client.get_guild(GUILD)
         channel = guild.get_channel(SERVER_LOG)
-        join_to_server_embed = discord.Embed(colour=discord.Colour(0xff2f),
+        join_to_server_embed = discord.Embed(colour=discord.Colour(0x89ff00),
                                              timestamp=datetime.datetime.now(tzinfo),
                                              description=f"{member} has joined the server!")
         join_to_server_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
