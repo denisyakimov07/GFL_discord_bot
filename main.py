@@ -36,10 +36,51 @@ async def on_ready():
     print('ready-v0.03.5')
 
 
+"""auditlog-join-log"""
+
+
+@client.event
+async def on_member_remove(member):
+    if member.guild.id == GUILD:
+        guild = client.get_guild(GUILD)
+        channel = guild.get_channel(SERVER_LOG)
+        left_server_embed = discord.Embed(colour=discord.Colour(0xff001f),
+                                          timestamp=datetime.datetime.now(tzinfo),
+                                          description=f"{member} has left the server!")
+        left_server_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
+        await channel.send(embed=left_server_embed)
+
+
+"""Server verify"""
+VERIFICATION_CHANNEL_ID = [709285744794927125, 819347673575456769]  # Discord TPG (verify-a-friend)
+
+
+@client.event
+async def on_member_join(member):
+    if member.guild.id == GUILD:
+        guild = client.get_guild(GUILD)
+        channel = guild.get_channel(SERVER_LOG)
+        verify_channel = guild.get_channel(709285744794927125)
+
+        join_to_server_embed = discord.Embed(colour=discord.Colour(0x89ff00),
+                                             timestamp=datetime.datetime.now(tzinfo),
+                                             description=f"{member} has joined the server!")
+        join_to_server_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
+        await channel.send(embed=join_to_server_embed)
+
+        verify_embed = discord.Embed(colour=discord.Colour(0x89ff00),
+                                     title=member.id,
+                                     timestamp=datetime.datetime.now(tzinfo),
+                                     description=f"{member} has joined the server!")
+        verify_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
+        msg = await verify_channel.send(embed=verify_embed)
+        await msg.add_reaction("✅")
+
+
 """Server role manager"""
 
 # Verification new users
-VERIFICATION_CHANNEL_ID = [709285744794927125, 819347673575456769]  # Discord TPG (verify-a-friend)
+
 ROLE_ALLOWED_TO_VERIFY_ID = [
     818901497244024842,  # Member
     722195472411787455,  # Coach
@@ -71,30 +112,29 @@ async def verify(ctx):
 
 @client.event
 async def on_raw_reaction_add(payload):
-    if payload.channel_id in VERIFICATION_CHANNEL_ID:
+    if payload.channel_id in VERIFICATION_CHANNEL_ID and str(payload.emoji.name) == "✅" and int(
+            payload.user_id) != BOT_ID:
         msg = await client.get_channel(payload.channel_id).fetch_message(payload.message_id)
-        member = payload.member
-        roles_user_list = [role.id for role in member.roles]
-        intersection_roles = set(roles_user_list) & set(ROLE_ALLOWED_TO_VERIFY_ID)
-        author = msg.author
-        member = payload.member
+        if msg.author.id == BOT_ID:
+            new_user_id = msg.embeds[0].title
+            member = payload.member
+            user_roles_list = [role.id for role in member.roles]
+            intersection_roles = set(user_roles_list) & set(ROLE_ALLOWED_TO_VERIFY_ID)
+            if len(intersection_roles) > 0:
+                guild = client.get_guild(GUILD)
+                new_user = await guild.fetch_member(int(new_user_id))
+                role = discord.utils.get(member.guild.roles, id=VERIFY_ROLE_ID)
+                await new_user.add_roles(role)
+                await msg.delete()
 
-        if int(payload.user_id) != BOT_ID and str(payload.emoji.name) == "✅" and len(intersection_roles) > 0:
-            channel_id = payload.channel_id
-            channel = client.get_channel(channel_id)
-            message = await channel.fetch_message(payload.message_id)
-            role = discord.utils.get(member.guild.roles, id=VERIFY_ROLE_ID)
-
-            # await author.send(f"{WELCOME_MESSAGE}")
-            await author.add_roles(role)
-            await message.delete()
-
-            success_embed = discord.Embed(colour=discord.Colour(0x8aff02),
-                                          description="```\n✅ User verified.```",
-                                          timestamp=datetime.datetime.now(tzinfo))
-            success_embed.set_author(name=f"{author}", icon_url=f"{author.avatar_url}")
-            success_embed.set_footer(text=f"{member}", icon_url=f"{member.avatar_url}")
-            await channel.send(embed=success_embed)
+                channel_id = payload.channel_id
+                channel = client.get_channel(channel_id)
+                success_embed = discord.Embed(colour=discord.Colour(0x8aff02),
+                                              description="```\n✅ User verified.```",
+                                              timestamp=datetime.datetime.now(tzinfo))
+                success_embed.set_author(name=f"{new_user}", icon_url=f"{new_user.avatar_url}")
+                success_embed.set_footer(text=f"{member}", icon_url=f"{member.avatar_url}")
+                await channel.send(embed=success_embed)
 
 
 """Log system"""
@@ -123,12 +163,11 @@ async def on_voice_state_update(member, before, after):
             await voice_channel.send(embed=join_embed)
             """ADD to DB"""
             checkuser = DiscordUser(member_name=str(member),
-                                      member_id=int(member.id),
-                                      member_nickname=str(member.nick),
-                                      avatar_url=member.avatar_url)
+                                    member_id=int(member.id),
+                                    member_nickname=str(member.nick),
+                                    avatar_url=member.avatar_url)
             session = Session()
             discord_user_create(checkuser, session)
-
 
         if before.channel and not after.channel:
             left_embed = discord.Embed(colour=discord.Colour(0xff001f),
@@ -159,32 +198,6 @@ async def on_voice_state_update(member, before, after):
                                            description=f"{member} | stop stream in {before.channel.name}!")
             switched_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
             await stream_channel.send(embed=switched_embed)
-
-            """auditlog-join-log"""
-
-
-@client.event
-async def on_member_join(member):
-    if member.guild.id == GUILD:
-        guild = client.get_guild(GUILD)
-        channel = guild.get_channel(SERVER_LOG)
-        join_to_server_embed = discord.Embed(colour=discord.Colour(0x89ff00),
-                                             timestamp=datetime.datetime.now(tzinfo),
-                                             description=f"{member} has joined the server!")
-        join_to_server_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
-        await channel.send(embed=join_to_server_embed)
-
-
-@client.event
-async def on_member_remove(member):
-    if member.guild.id == GUILD:
-        guild = client.get_guild(GUILD)
-        channel = guild.get_channel(SERVER_LOG)
-        left_server_embed = discord.Embed(colour=discord.Colour(0xff001f),
-                                          timestamp=datetime.datetime.now(tzinfo),
-                                          description=f"{member} has left the server!")
-        left_server_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
-        await channel.send(embed=left_server_embed)
 
 
 @client.command()
@@ -420,9 +433,6 @@ def discord_user_create(checkuser, session):
             raise
         finally:
             session.close()
-
-
-
 
 
 if __name__ == '__main__':
