@@ -3,8 +3,22 @@ DB_HOST = "ec2-3-231-194-96.compute-1.amazonaws.com"
 DB_DATABASE = "dfbrk3inotlpj7"
 DB_USER = "iytljkkpvexosv"
 DB_PASSWORD = "75559782607483335ce47b4f6c60ea770382a95d9c62823591a290320a7bda59"
+DB_PORT = "5432"
 """name  - epiz_27963539,  pass -o8vSQ3DjMGQ, host name - sql105.epizy.com, data_name - epiz_27963539_tpgdatabace,"""
 "https://discord.com/api/oauth2/authorize?client_id=786029312788791346&permissions=2014313665&scope=bot"
+
+
+DB_DATABASE_TYPE_1 = "mysql"
+DB_HOST_1 = "mysql104.1gb.ru"
+DB_DATABASE_1 = "gb_bot_1_2"
+DB_USER_1 = "gb_bot_1_2"
+DB_PASSWORD_1 = "Feg-x9wWAXRL"
+DB_PORT_1 = "3306"
+
+
+
+
+
 
 
 # Apex

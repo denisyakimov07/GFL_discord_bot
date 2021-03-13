@@ -23,7 +23,7 @@ APEX_ROLES = ['Bronze 1', 'Bronze 2', 'Bronze 3', 'Bronze 4', 'Silver 1', 'Silve
 BOT_COMAND_channels = ["bot_command", "основной"]
 BOT_COMAND_channels_ID = ["788693067757781023", "816203477801762836"]
 
-engine_config = f'{config.DB_DATABASE_TYPE}://{config.DB_USER}:{config.DB_PASSWORD}@{config.DB_HOST}:5432/{config.DB_DATABASE}'
+engine_config = f'{config.DB_DATABASE_TYPE_1}://{config.DB_USER_1}:{config.DB_PASSWORD_1}@{config.DB_HOST_1}:{config.DB_PORT_1}/{config.DB_DATABASE_1}'
 engine = create_engine(engine_config, echo=True)
 Session = sessionmaker(bind=engine)
 
@@ -121,6 +121,14 @@ async def on_voice_state_update(member, before, after):
                                        description=f"{member} has arrived to {after.channel.name}!")
             join_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
             await voice_channel.send(embed=join_embed)
+            """ADD to DB"""
+            checkuser = DiscordUser(member_name=str(member),
+                                      member_id=int(member.id),
+                                      member_nickname=str(member.nick),
+                                      avatar_url=member.avatar_url)
+            session = Session()
+            discord_user_create(checkuser, session)
+
 
         if before.channel and not after.channel:
             left_embed = discord.Embed(colour=discord.Colour(0xff001f),
@@ -402,11 +410,19 @@ async def submit(ctx):
 
 def discord_user_create(checkuser, session):
     user_stat = session.query(exists().where(DiscordUser.member_id == checkuser.member_id)).scalar()
-    if user_stat:
-        user_check = session.query(DiscordUser).filter_by(member_id=checkuser.member_id).first()
-
-    else:
+    if not user_stat:
         session.add(checkuser)
+        try:
+            session.commit()
+        except:
+            print(f"{user_stat}--ERROR")
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
+
+
 
 
 if __name__ == '__main__':
