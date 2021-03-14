@@ -5,7 +5,7 @@ import datetime
 
 from sqlalchemy.orm import relationship
 
-timezone_offset = 8.0  # Pacific Standard Time (UTC−08:00)
+timezone_offset = -8.0  # Pacific Standard Time (UTC−08:00)
 tzinfo = datetime.timezone(datetime.timedelta(hours=timezone_offset))
 
 BaseModel = declarative_base()
