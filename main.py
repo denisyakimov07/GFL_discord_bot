@@ -8,7 +8,7 @@ from sqlalchemy import create_engine, exists
 from sqlalchemy.orm import sessionmaker, query
 
 import config
-from models import DiscordUser, MediaPost
+from models import DiscordUser, MediaPost, OnlineTimeLog
 from apex_api import get_apex_rank
 from welcome_message import WELCOME_MESSAGE
 
@@ -33,7 +33,7 @@ tzinfo = datetime.timezone(datetime.timedelta(hours=timezone_offset))
 
 @client.event
 async def on_ready():
-    print('ready-v0.03.6')
+    print('ready-v0.03.7')
 
 
 """auditlog-join-log"""
@@ -93,23 +93,6 @@ BOT_ID = 786029312788791346
 VERIFY_ROLE_ID = 703686185968599111
 
 
-@client.command()
-async def verify(ctx):
-    member = ctx.message.author
-    user_roles_list = [role.id for role in member.roles]
-    intersection_roles = set(user_roles_list) & set(ROLE_ALLOWED_TO_VERIFY_ID)
-
-    if len(intersection_roles) > 0:
-        embed = discord.Embed(colour=discord.Colour(0xff001e),
-                              description="✅ User already verified.",
-                              timestamp=datetime.datetime.now(tzinfo))
-        embed.set_footer(text=f"{member}", icon_url=f"{member.avatar_url}")
-        await ctx.send(embed=embed)
-
-    elif ctx.channel.id in VERIFICATION_CHANNEL_ID:
-        await ctx.message.add_reaction("✅")
-
-
 @client.event
 async def on_raw_reaction_add(payload):
     if payload.channel_id in VERIFICATION_CHANNEL_ID and str(payload.emoji.name) == "✅" and int(
@@ -154,14 +137,14 @@ async def on_voice_state_update(member, before, after):
     if member.guild.id == GUILD:
 
         """auditlog-voice"""
-
         if not before.channel:
             join_embed = discord.Embed(colour=discord.Colour(0xff2f),
                                        timestamp=datetime.datetime.now(tzinfo),
                                        description=f"{member} has arrived to {after.channel.name}!")
             join_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
             await voice_channel.send(embed=join_embed)
-            """ADD to DB"""
+
+            """ADD user to DB"""
             checkuser = DiscordUser(member_name=str(member),
                                     member_id=int(member.id),
                                     member_nickname=str(member.nick),
@@ -169,12 +152,24 @@ async def on_voice_state_update(member, before, after):
             session = Session()
             discord_user_create(checkuser, session)
 
+            """ADD time record DB"""
+            session2 = Session()
+            time_log = OnlineTimeLog(member_id=member.id, status=True)
+            add_time_log(time_log, session2)
+
+
+
         if before.channel and not after.channel:
             left_embed = discord.Embed(colour=discord.Colour(0xff001f),
                                        timestamp=datetime.datetime.now(tzinfo),
                                        description=f"{member} User disconnect!")
             left_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
             await voice_channel.send(embed=left_embed)
+
+            """ADD time record DB"""
+            session2 = Session()
+            time_log = OnlineTimeLog(member_id=member.id, status=False)
+            add_time_log(time_log, session2)
 
         if before.channel and after.channel and before.channel != after.channel:
             switched_embed = discord.Embed(colour=discord.Colour(0xffea00),
@@ -429,6 +424,18 @@ def discord_user_create(checkuser, session):
             session.commit()
         except:
             print(f"{user_stat}--ERROR")
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
+
+def add_time_log(record, session):
+        session.add(record)
+        try:
+            session.commit()
+        except:
+            print(f"{record}--ERROR")
             session.rollback()
             raise
         finally:

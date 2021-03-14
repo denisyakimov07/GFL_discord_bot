@@ -15,7 +15,12 @@ DB_USER_1 = "gb_bot_1_2"
 DB_PASSWORD_1 = "Feg-x9wWAXRL"
 DB_PORT_1 = "3306"
 
-
+DB_DATABASE_TYPE_2 = "postgresql"
+DB_HOST_2 = "postgres76.1gb.ru"
+DB_DATABASE_2 = "xgb_gb_bot1"
+DB_USER_2 = "xgb_gb_bot1"
+DB_PASSWORD_2 = "HsWFF8Q-WaeT"
+DB_PORT_2 = "5432"
 
 
 

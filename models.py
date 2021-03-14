@@ -1,5 +1,5 @@
 from sqlalchemy import Sequence, ForeignKey
-from sqlalchemy import Column, Integer, String, BigInteger, DateTime, Text
+from sqlalchemy import Column, Integer, String, BigInteger, DateTime, Text,  Boolean
 from sqlalchemy.ext.declarative import declarative_base
 import datetime
 
@@ -24,6 +24,17 @@ class DiscordUser(BaseModel):
         return f"{self.member_name} - {self.member_id} - {self.member_nickname}"
 
 
+class OnlineTimeLog(BaseModel):
+    __tablename__ = 'online-time-log'
+    id = Column(Integer, Sequence('time-log_id_seq'), primary_key=True)
+    member_id = Column(BigInteger)
+    create_time = Column(DateTime, default=datetime.datetime.now)
+    status = Column(Boolean)
+
+    def __repr__(self):
+        return f"{self.member_id} - {self.status}"
+
+
 class MediaPost(BaseModel):
     __tablename__ = 'media_post'
     id = Column(Integer, Sequence('media_post_id_seq'), primary_key=True)
@@ -32,7 +43,6 @@ class MediaPost(BaseModel):
     admin_user_id = Column(BigInteger)
     discord_message_id = Column(BigInteger)
     create_time = Column(DateTime, default=datetime.datetime.now)
-
 
     def __repr__(self):
         return f"{self.id} - {self.message_data}"
