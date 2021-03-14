@@ -17,7 +17,7 @@ class DiscordUser(BaseModel):
     member_name = Column(String(50))
     member_id = Column(BigInteger)
     member_nickname = Column(String(50))
-    create_time = Column(DateTime, default=datetime.datetime.now)
+    create_time = Column(DateTime, default=datetime.datetime.now(tzinfo))
     avatar_url = Column(Text)
 
     def __repr__(self):
@@ -28,7 +28,7 @@ class OnlineTimeLog(BaseModel):
     __tablename__ = 'online-time-log'
     id = Column(Integer, Sequence('time-log_id_seq'), primary_key=True)
     member_id = Column(BigInteger)
-    create_time = Column(DateTime, default=datetime.datetime.now)
+    create_time = Column(DateTime, default=datetime.datetime.now(tzinfo))
     status = Column(Boolean)
 
     def __repr__(self):
@@ -42,7 +42,7 @@ class MediaPost(BaseModel):
     message_author_id = Column(BigInteger)
     admin_user_id = Column(BigInteger)
     discord_message_id = Column(BigInteger)
-    create_time = Column(DateTime, default=datetime.datetime.now)
+    create_time = Column(DateTime, default=datetime.datetime.now(tzinfo))
 
     def __repr__(self):
         return f"{self.id} - {self.message_data}"
