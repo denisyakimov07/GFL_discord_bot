@@ -24,7 +24,7 @@ BOT_COMAND_channels = ["bot_command", "основной"]
 BOT_COMAND_channels_ID = ["788693067757781023", "816203477801762836"]
 
 engine_config = f'{config.DB_DATABASE_TYPE_1}://{config.DB_USER_1}:{config.DB_PASSWORD_1}@{config.DB_HOST_1}:{config.DB_PORT_1}/{config.DB_DATABASE_1}'
-engine = create_engine(engine_config, echo=True)
+engine = create_engine(engine_config, echo=False)
 Session = sessionmaker(bind=engine)
 
 timezone_offset = 8.0  # Pacific Standard Time (UTC−08:00)
