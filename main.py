@@ -8,7 +8,7 @@ from sqlalchemy import create_engine, exists
 from sqlalchemy.orm import sessionmaker, query
 
 import config
-from models import DiscordUser, MediaPost, OnlineTimeLog
+from models import DiscordUser, MediaPost, OnlineTimeLog, OnlineStreamTimeLog
 from apex_api import get_apex_rank
 from welcome_message import WELCOME_MESSAGE
 
@@ -33,7 +33,7 @@ tzinfo = datetime.timezone(datetime.timedelta(hours=timezone_offset))
 
 @client.event
 async def on_ready():
-    print('ready-v0.03.7')
+    print('ready-v0.03.8')
 
 
 """auditlog-join-log"""
@@ -167,9 +167,9 @@ async def on_voice_state_update(member, before, after):
             await voice_channel.send(embed=left_embed)
 
             """ADD time record DB"""
-            session2 = Session()
+            session = Session()
             time_log = OnlineTimeLog(member_id=member.id, status=False)
-            add_time_log(time_log, session2)
+            add_time_log(time_log, session)
 
         if before.channel and after.channel and before.channel != after.channel:
             switched_embed = discord.Embed(colour=discord.Colour(0xffea00),
@@ -187,12 +187,21 @@ async def on_voice_state_update(member, before, after):
             switched_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
             await stream_channel.send(embed=switched_embed)
 
+            """ADD stream time record DB"""
+            session = Session()
+            time_log = OnlineStreamTimeLog(member_id=member.id, status=True)
+            add_time_log(time_log, session)
+
         if before.self_stream and not after.self_stream or not after.channel and after.self_stream:
             switched_embed = discord.Embed(colour=discord.Colour(0xff001f),
                                            timestamp=datetime.datetime.now(tzinfo),
                                            description=f"{member} | stop stream in {before.channel.name}!")
             switched_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
             await stream_channel.send(embed=switched_embed)
+            """ADD stream time record DB"""
+            session = Session()
+            time_log = OnlineStreamTimeLog(member_id=member.id, status=False)
+            add_time_log(time_log, session)
 
 
 @client.command()

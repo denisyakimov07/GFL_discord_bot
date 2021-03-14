@@ -35,6 +35,17 @@ class OnlineTimeLog(BaseModel):
         return f"{self.member_id} - {self.status}"
 
 
+class OnlineStreamTimeLog(BaseModel):
+    __tablename__ = 'stream-time-log'
+    id = Column(Integer, Sequence('Stream-log_id_seq'), primary_key=True)
+    member_id = Column(BigInteger)
+    create_time = Column(DateTime, default=datetime.datetime.now(tzinfo))
+    status = Column(Boolean)
+
+    def __repr__(self):
+        return f"{self.member_id} - {self.status}"
+
+
 class MediaPost(BaseModel):
     __tablename__ = 'media_post'
     id = Column(Integer, Sequence('media_post_id_seq'), primary_key=True)
