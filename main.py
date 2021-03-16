@@ -44,7 +44,7 @@ async def on_member_remove(member):
 
 
 """Server verify"""
-VERIFICATION_CHANNEL_ID = [709285744794927125, 819347673575456769]  # Discord TPG (verify-a-friend)
+VERIFICATION_CHANNEL_ID = [709285744794927125, 819347673575456769]  # Discord TPG (verify-a-friend) 709285744794927125
 
 
 @client.event
@@ -228,6 +228,37 @@ async def rank(ctx, user_name=None):
             embed.set_footer(text="footer private massage", icon_url="https://cdn.discordapp.com/embed/avatars/0.png")
             await ctx.send(embed=embed)
 
+@client.command()
+async def verify(ctx, user_name=None):
+    if int(ctx.channel.id) in VERIFICATION_CHANNEL_ID:
+        author = ctx.message.author
+        user_roles_list = [role.id for role in author.roles]
+        intersection_roles = set(user_roles_list) & set(ROLE_ALLOWED_TO_VERIFY_ID)
+        if len(intersection_roles) > 0:
+            try:
+                member = discord.utils.get(client.get_all_members(), name=user_name.split("#")[0],
+                                       discriminator=user_name.split("#")[1])
+            except:
+                await ctx.send("Can't fine User")
+            if len(member.roles)==1:
+                role = discord.utils.get(member.guild.roles, id=VERIFY_ROLE_ID)
+                await member.add_roles(role)
+                success_embed = discord.Embed(colour=discord.Colour(0x8aff02),
+                                              description="```\n✅ User verified.```",
+                                              timestamp=datetime.datetime.now(tzinfo))
+                success_embed.set_author(name=f"{member}", icon_url=f"{member.avatar_url}")
+                success_embed.set_footer(text=f"{author}", icon_url=f"{author.avatar_url}")
+                await ctx.send(embed=success_embed)
+            await ctx.send('User already verified')
+
+        else:
+            await ctx.send('No permission to verify users')
+
+
+@client.command()
+async def clear(ctx, amount=0):
+    if ctx.author.id == 339287982320254976:
+        await ctx.channel.purge(limit=amount+1)
 
 if __name__ == '__main__':
     client.run(config.TOKEN)
