@@ -46,14 +46,14 @@ class OnlineStreamTimeLog(BaseModel):
         return f"{self.member_id} - {self.status}"
 
 
-class MediaPost(BaseModel):
-    __tablename__ = 'media_post'
-    id = Column(Integer, Sequence('media_post_id_seq'), primary_key=True)
-    message_data = Column(Text)
-    message_author_id = Column(BigInteger)
-    admin_user_id = Column(BigInteger)
-    discord_message_id = Column(BigInteger)
-    create_time = Column(DateTime, default=datetime.datetime.now(tzinfo))
-
-    def __repr__(self):
-        return f"{self.id} - {self.message_data}"
+# class MediaPost(BaseModel):
+#     __tablename__ = 'media_post'
+#     id = Column(Integer, Sequence('media_post_id_seq'), primary_key=True)
+#     message_data = Column(Text)
+#     message_author_id = Column(BigInteger)
+#     admin_user_id = Column(BigInteger)
+#     discord_message_id = Column(BigInteger)
+#     create_time = Column(DateTime, default=datetime.datetime.now(tzinfo))
+#
+#     def __repr__(self):
+#         return f"{self.id} - {self.message_data}"
