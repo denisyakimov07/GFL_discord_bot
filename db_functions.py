@@ -33,17 +33,27 @@ def discord_user_create(check_user):
             raise
         finally:
             session.close()
-            print(f"Session close.")
+            print(f"Session close (discord_user_create).")
 
 
-def add_time_log(record):
-    session = Session()
-    session.add(record)
+def add_record_log(record):
     try:
-        session.commit()
+        session = Session()
+        print(f"New connection was created")
     except:
-        print(f"{record}--ERROR")
-        session.rollback()
-        raise
-    finally:
-        session.close()
+        print(f"Cant created connect to db.")
+    if session:
+        session.add(record)
+        try:
+            session.commit()
+            print(f"New log added.")
+        except:
+            print(f"New record {record} was not added.")
+            session.rollback()
+            raise
+        finally:
+            session.close()
+            print(f"Session close (add_record_log).")
+
+
+

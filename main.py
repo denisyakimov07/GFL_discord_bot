@@ -4,8 +4,8 @@ from discord.ext import commands
 import datetime
 
 import config
-from db_functions import add_time_log, discord_user_create
-from models import DiscordUser, OnlineTimeLog, OnlineStreamTimeLog
+from db_functions import add_record_log, discord_user_create
+from models import DiscordUser, OnlineTimeLog, OnlineStreamTimeLog, UserVerifiedLog
 from apex_api import get_apex_rank
 
 intents = discord.Intents.default()
@@ -72,7 +72,6 @@ async def on_member_join(member):
 """Server role manager"""
 
 # Verification new users
-
 ROLE_ALLOWED_TO_VERIFY_ID = [
     818901497244024842,  # Member
     722195472411787455,  # Coach
@@ -110,6 +109,9 @@ async def on_raw_reaction_add(payload):
                 success_embed.set_author(name=f"{new_user}", icon_url=f"{new_user.avatar_url}")
                 success_embed.set_footer(text=f"{member}", icon_url=f"{member.avatar_url}")
                 await channel.send(embed=success_embed)
+                role_add_log = UserVerifiedLog(member_id=new_user_id, admin_id=member.id)
+                add_record_log(role_add_log)
+
 
 
 """Log system"""
@@ -147,7 +149,7 @@ async def on_voice_state_update(member, before, after):
             """ADD time record DB"""
 
             time_log = OnlineTimeLog(member_id=member.id, status=True)
-            add_time_log(time_log)
+            add_record_log(time_log)
 
         if before.channel and not after.channel:
             left_embed = discord.Embed(colour=discord.Colour(0xff001f),
@@ -159,7 +161,7 @@ async def on_voice_state_update(member, before, after):
             """ADD time record DB"""
 
             time_log = OnlineTimeLog(member_id=member.id, status=False)
-            add_time_log(time_log)
+            add_record_log(time_log)
 
         if before.channel and after.channel and before.channel != after.channel:
             switched_embed = discord.Embed(colour=discord.Colour(0xffea00),
@@ -179,7 +181,7 @@ async def on_voice_state_update(member, before, after):
             """ADD stream time record DB"""
 
             time_log = OnlineStreamTimeLog(member_id=member.id, status=True)
-            add_time_log(time_log)
+            add_record_log(time_log)
 
         if before.self_stream and not after.self_stream or not after.channel and after.self_stream:
             switched_embed = discord.Embed(colour=discord.Colour(0xff001f),
@@ -191,7 +193,7 @@ async def on_voice_state_update(member, before, after):
             """ADD stream time record DB"""
 
             time_log = OnlineStreamTimeLog(member_id=member.id, status=False)
-            add_time_log(time_log)
+            add_record_log(time_log)
 
 
 @client.command()

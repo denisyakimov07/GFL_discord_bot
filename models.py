@@ -1,5 +1,5 @@
 from sqlalchemy import Sequence, ForeignKey
-from sqlalchemy import Column, Integer, String, BigInteger, DateTime, Text,  Boolean
+from sqlalchemy import Column, Integer, String, BigInteger, DateTime, Text, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 import datetime
 
@@ -46,14 +46,9 @@ class OnlineStreamTimeLog(BaseModel):
         return f"{self.member_id} - {self.status}"
 
 
-# class MediaPost(BaseModel):
-#     __tablename__ = 'media_post'
-#     id = Column(Integer, Sequence('media_post_id_seq'), primary_key=True)
-#     message_data = Column(Text)
-#     message_author_id = Column(BigInteger)
-#     admin_user_id = Column(BigInteger)
-#     discord_message_id = Column(BigInteger)
-#     create_time = Column(DateTime, default=datetime.datetime.now(tzinfo))
-#
-#     def __repr__(self):
-#         return f"{self.id} - {self.message_data}"
+class UserVerifiedLog(BaseModel):
+    __tablename__ = 'verified_users'
+    id = Column(Integer, Sequence('media_post_id_seq'), primary_key=True)
+    member_id = Column(BigInteger)  # User get role
+    admin_id = Column(BigInteger)  # User added role
+    create_time = Column(DateTime, default=datetime.datetime.now(tzinfo))
