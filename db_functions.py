@@ -4,7 +4,8 @@ from sqlalchemy.orm import sessionmaker
 import config
 from models import DiscordUser
 
-engine_config = f'{config.DB_DATABASE_TYPE_1}://{config.DB_USER_1}:{config.DB_PASSWORD_1}@{config.DB_HOST_1}:{config.DB_PORT_1}/{config.DB_DATABASE_1}'
+#engine_config = f'{config.DB_DATABASE_TYPE_1}://{config.DB_USER_1}:{config.DB_PASSWORD_1}@{config.DB_HOST_1}:{config.DB_PORT_1}/{config.DB_DATABASE_1}'
+engine_config = config.mysql_string
 engine = create_engine(engine_config, echo=False)
 Session = sessionmaker(bind=engine)
 

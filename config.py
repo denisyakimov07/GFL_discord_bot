@@ -23,6 +23,8 @@ DB_PASSWORD_2 = "HsWFF8Q-WaeT"
 DB_PORT_2 = "5432"
 
 
+mysql_string="mysql://fc6y1n1ajv8pp7cj:t6tre6s1mui9c0m6@g84t6zfpijzwx08q.cbetxkdyhwsb.us-east-1.rds.amazonaws.com:3306/kpwd549ton7r7kdj"
+
 
 
 

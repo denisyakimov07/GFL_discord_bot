@@ -113,7 +113,6 @@ async def on_raw_reaction_add(payload):
                 add_record_log(role_add_log)
 
 
-
 """Log system"""
 GUILD = 696277112600133633
 CHANNELS_LOG = 818756453778063380  # auditlog-voice
@@ -139,12 +138,12 @@ async def on_voice_state_update(member, before, after):
             await voice_channel.send(embed=join_embed)
 
             """ADD user to DB"""
-            checkuser = DiscordUser(member_name=str(member),
+            check_user = DiscordUser(member_name=str(member),
                                     member_id=int(member.id),
                                     member_nickname=str(member.nick),
                                     avatar_url=member.avatar_url)
 
-            discord_user_create(checkuser)
+            discord_user_create(check_user)
 
             """ADD time record DB"""
 
@@ -228,6 +227,7 @@ async def rank(ctx, user_name=None):
             embed.set_footer(text="footer private massage", icon_url="https://cdn.discordapp.com/embed/avatars/0.png")
             await ctx.send(embed=embed)
 
+
 @client.command()
 async def verify(ctx, user_name=None):
     if int(ctx.channel.id) in VERIFICATION_CHANNEL_ID:
@@ -237,10 +237,10 @@ async def verify(ctx, user_name=None):
         if len(intersection_roles) > 0:
             try:
                 member = discord.utils.get(client.get_all_members(), name=user_name.split("#")[0],
-                                       discriminator=user_name.split("#")[1])
+                                           discriminator=user_name.split("#")[1])
             except:
                 await ctx.send("Can't fine User")
-            if len(member.roles)==1:
+            if len(member.roles) == 1:
                 role = discord.utils.get(member.guild.roles, id=VERIFY_ROLE_ID)
                 await member.add_roles(role)
                 success_embed = discord.Embed(colour=discord.Colour(0x8aff02),
@@ -258,7 +258,8 @@ async def verify(ctx, user_name=None):
 @client.command()
 async def clear(ctx, amount=0):
     if ctx.author.id == 339287982320254976:
-        await ctx.channel.purge(limit=amount+1)
+        await ctx.channel.purge(limit=amount + 1)
+
 
 if __name__ == '__main__':
     client.run(config.TOKEN)
