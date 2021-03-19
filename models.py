@@ -52,3 +52,6 @@ class UserVerifiedLog(BaseModel):
     member_id = Column(BigInteger)  # User get role
     admin_id = Column(BigInteger)  # User added role
     create_time = Column(DateTime, default=datetime.datetime.now(tzinfo))
+
+    def __repr__(self):
+        return f"{self.member_id} - {self.admin_id}"

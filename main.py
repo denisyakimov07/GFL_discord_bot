@@ -1,10 +1,13 @@
 import discord
 from discord.ext import commands
+from discord import Streaming
+from discord.utils import get
 
 import datetime
 
 import config
 from db_functions import add_record_log, discord_user_create
+from esport_api import create_discord_user_api
 from models import DiscordUser, OnlineTimeLog, OnlineStreamTimeLog, UserVerifiedLog
 from apex_api import get_apex_rank
 
@@ -139,11 +142,19 @@ async def on_voice_state_update(member, before, after):
 
             """ADD user to DB"""
             check_user = DiscordUser(member_name=str(member),
-                                    member_id=int(member.id),
-                                    member_nickname=str(member.nick),
-                                    avatar_url=member.avatar_url)
+                                     member_id=int(member.id),
+                                     member_nickname=str(member.nick),
+                                     avatar_url=member.avatar_url)
 
             discord_user_create(check_user)
+
+            """ADD user to API DB"""
+            new_user = {"memberName": str(member),
+                        "memberId": str(member.id),
+                        "avatarUrl": member.avatar_url
+                        }
+            create_discord_user_api(new_user)
+
 
             """ADD time record DB"""
 
@@ -244,7 +255,7 @@ async def verify(ctx, user_name=None):
                 role = discord.utils.get(member.guild.roles, id=VERIFY_ROLE_ID)
                 await member.add_roles(role)
                 success_embed = discord.Embed(colour=discord.Colour(0x8aff02),
-                                              description="```\n✅ User verified.```",
+                                              description="```\n✅ User verified!```",
                                               timestamp=datetime.datetime.now(tzinfo))
                 success_embed.set_author(name=f"{member}", icon_url=f"{member.avatar_url}")
                 success_embed.set_footer(text=f"{author}", icon_url=f"{author.avatar_url}")
@@ -259,6 +270,35 @@ async def verify(ctx, user_name=None):
 async def clear(ctx, amount=0):
     if ctx.author.id == 339287982320254976:
         await ctx.channel.purge(limit=amount + 1)
+
+
+@client.command()
+async def test(ctx):
+    profile = await ctx.author.profile()
+    await ctx.send(profile)
+
+
+@client.event
+async def on_member_update(before, after):
+    print(before)
+    print(after)
+    try:
+        activity = after.activity.type
+    except:
+        pass
+
+    if not before.activity.type == after.activity.type:
+        return
+
+    channel = get(after.guild.channels, id=709285744794927125)
+
+    if isinstance(after.activity, Streaming):
+        await channel.send(
+            f"{before.mention} is streaming on {activity.platform}: {activity.name}.\nJoin here: {activity.url}")
+    elif isinstance(before.activity, Streaming):
+        await channel.send(f'{after.mention} is no longer streaming!')
+    else:
+        return
 
 
 if __name__ == '__main__':
