@@ -278,27 +278,27 @@ async def test(ctx):
     await ctx.send(profile)
 
 
-@client.event
-async def on_member_update(before, after):
-    print(before)
-    print(after)
-    try:
-        activity = after.activity.type
-    except:
-        pass
-
-    if not before.activity.type == after.activity.type:
-        return
-
-    channel = get(after.guild.channels, id=709285744794927125)
-
-    if isinstance(after.activity, Streaming):
-        await channel.send(
-            f"{before.mention} is streaming on {activity.platform}: {activity.name}.\nJoin here: {activity.url}")
-    elif isinstance(before.activity, Streaming):
-        await channel.send(f'{after.mention} is no longer streaming!')
-    else:
-        return
+# @client.event
+# async def on_member_update(before, after):
+#     print(before)
+#     print(after)
+#     try:
+#         activity = after.activity.type
+#     except:
+#         pass
+#
+#     if not before.activity.type == after.activity.type:
+#         return
+#
+#     channel = get(after.guild.channels, id=709285744794927125)
+#
+#     if isinstance(after.activity, Streaming):
+#         await channel.send(
+#             f"{before.mention} is streaming on {activity.platform}: {activity.name}.\nJoin here: {activity.url}")
+#     elif isinstance(before.activity, Streaming):
+#         await channel.send(f'{after.mention} is no longer streaming!')
+#     else:
+#         return
 
 
 if __name__ == '__main__':

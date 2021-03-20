@@ -82,16 +82,6 @@ def create_discord_user_api(new_user):
 
 
 
-
-
-new_user = {"memberName": "Yanis07 (Denis)#1771",
-            "memberId": "339287982320254976",
-            "avatarUrl": "https://cdn.discordapp.com/avatars/339287982320254976/0642007edaec7940b9f6ffd398a20962.webp?size=1024"
-            }
-
-create_discord_user_api(new_user)
-
-
 def delete_user():
     check_user = requests.delete(f'{BASE_URL}DiscordUser/{"6053cb7f1a633f001cf7c2d9"}', headers=HEADER)
     print(check_user)
