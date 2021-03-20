@@ -41,7 +41,7 @@ async def on_member_remove(member):
         channel = guild.get_channel(SERVER_LOG)
         left_server_embed = discord.Embed(colour=discord.Colour(0xff001f),
                                           timestamp=datetime.datetime.now(tzinfo),
-                                          description=f"{member} has left the server!")
+                                          description=f"{member.mention} has left the server!")
         left_server_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
         await channel.send(embed=left_server_embed)
 
@@ -107,7 +107,7 @@ async def on_raw_reaction_add(payload):
                 channel_id = payload.channel_id
                 channel = client.get_channel(channel_id)
                 success_embed = discord.Embed(colour=discord.Colour(0x8aff02),
-                                              description="```\n✅ User verified.```",
+                                              description=f"\n✅ User verified. {new_user.mention}",
                                               timestamp=datetime.datetime.now(tzinfo))
                 success_embed.set_author(name=f"{new_user}", icon_url=f"{new_user.avatar_url}")
                 success_embed.set_footer(text=f"{member}", icon_url=f"{member.avatar_url}")
@@ -153,7 +153,7 @@ async def on_voice_state_update(member, before, after):
                         "memberId": str(member.id),
                         "avatarUrl": member.avatar_url
                         }
-            create_discord_user_api(new_user)
+            #create_discord_user_api(new_user)
 
 
             """ADD time record DB"""
@@ -255,7 +255,7 @@ async def verify(ctx, user_name=None):
                 role = discord.utils.get(member.guild.roles, id=VERIFY_ROLE_ID)
                 await member.add_roles(role)
                 success_embed = discord.Embed(colour=discord.Colour(0x8aff02),
-                                              description="```\n✅ User verified!```",
+                                              description=f"\n✅ User verified. {member.mention}",
                                               timestamp=datetime.datetime.now(tzinfo))
                 success_embed.set_author(name=f"{member}", icon_url=f"{member.avatar_url}")
                 success_embed.set_footer(text=f"{author}", icon_url=f"{author.avatar_url}")

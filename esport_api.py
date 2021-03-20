@@ -13,6 +13,7 @@ def get_new_access_token():
             }
     try:
         resp = requests.post(f'https://gamersforlife.herokuapp.com/oauth/token', json=body)
+        print(resp.json())
         access_token = resp.json()['accessToken']
         if resp.status_code == 200:
             print("New token was create")
@@ -37,6 +38,7 @@ class AccessToken:
 
     def get_token(self):
         if time.time() > self.token_gen_time + self.TOKEN_TTL:
+            print(token)
             # token can be expired.
             self.refresh_token()
         return self.token
@@ -59,13 +61,17 @@ def get_user_by_id_from_api(new_user):
     params = {"q":
                   json.dumps({"memberId": f"{new_user['memberId']}"})
               }
-    check_user = requests.get(f'{BASE_URL}DiscordUser', headers=HEADER, params=params)
-    if len(check_user.json()["data"]) == 0:
-        print(f"User was no found {new_user}.")
-        return False
-    else:
-        print(f"User was found {new_user}.")
-        return True
+    try:
+        check_user = requests.get(f'{BASE_URL}DiscordUser', headers=HEADER, params=params)
+        print(check_user.json())
+        if len(check_user.json()["data"]) == 0:
+            print(f"User was no found {new_user}.")
+            return False
+        else:
+            print(f"User was found {new_user}.")
+            return True
+    except:
+        print(f"Cant check user")
 
 
 def create_discord_user_api(new_user):
