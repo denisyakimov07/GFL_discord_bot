@@ -131,6 +131,10 @@ async def on_voice_state_update(member, before, after):
     stream_channel = guild.get_channel(STREAM_LOG)
 
     if member.guild.id == GUILD:
+        new_user = {"memberName": f"{member}",
+                    "memberId": f"{member.id}",
+                    "avatarUrl": f"{member.avatar_url}"
+                    }
 
         """auditlog-voice"""
         if not before.channel:
@@ -149,10 +153,6 @@ async def on_voice_state_update(member, before, after):
             discord_user_create(check_user)
 
             """ADD user to API DB"""
-            new_user = {"memberName": f"{member}",
-                        "memberId": f"{member.id}",
-                        "avatarUrl": f"{member.avatar_url}"
-                        }
             create_discord_user_api(new_user)
 
 
@@ -176,11 +176,8 @@ async def on_voice_state_update(member, before, after):
 
             time_log = OnlineTimeLog(member_id=member.id, status=False)
             add_record_log(time_log)
+
             """API"""
-            new_user = {"memberName": f"{member}",
-                        "memberId": f"{member.id}",
-                        "avatarUrl": f"{member.avatar_url}"
-                        }
             add_discord_time_log(new_user, status=False)
 
         if before.channel and after.channel and before.channel != after.channel:

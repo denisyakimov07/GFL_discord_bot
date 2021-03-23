@@ -50,21 +50,21 @@ access_token = AccessToken()
 token = access_token.get_token()
 
 # 401
-HEADER = {"Authorization": f"{token}",
-          "Content-Type": "application/json"
-          }
+# HEADER = {"Authorization": f"{access_token.get_token()}",
+#           "Content-Type": "application/json"
+#           }
 BASE_URL = "https://gamersforlife.herokuapp.com/api/model/"
 GET_NEW_TOKEN_URL = "oauth/token"
 DiscordUser = "DiscordUser"
 
 
 def get_user_by_id_from_api(new_user):
-    print(HEADER)
+    header = {"Authorization": f"{access_token.get_token()}"}
     params = {"q":
                   json.dumps({"memberId": f"{new_user['memberId']}"})
               }
     try:
-        check_user = requests.get(f'{BASE_URL}DiscordUser', headers=HEADER, params=params)
+        check_user = requests.get(f'{BASE_URL}DiscordUser', headers=header, params=params)
         if len(check_user.json()["data"]) == 0:
             print(f"User was no found {new_user}.")
             return False
@@ -76,10 +76,10 @@ def get_user_by_id_from_api(new_user):
 
 
 def create_discord_user_api(new_user):
-    print(HEADER)
+    header = {"Authorization": f"{access_token.get_token()}"}
     user_status = get_user_by_id_from_api(new_user)
     if not user_status:
-        resp = requests.post(f'{BASE_URL}DiscordUser', headers=HEADER, json=new_user)
+        resp = requests.post(f'{BASE_URL}DiscordUser', headers=header, json=new_user)
         if resp.status_code == 200:
             print(f"User was create {new_user}.")
         else:
@@ -89,30 +89,23 @@ def create_discord_user_api(new_user):
 
 
 def delete_user(user_id):
-    check_user = requests.delete(f'{BASE_URL}DiscordUser/{user_id}', headers=HEADER)
+    header = {"Authorization": f"{access_token.get_token()}"}
+    check_user = requests.delete(f'{BASE_URL}DiscordUser/{user_id}', headers=header)
     print(check_user)
     print(check_user.json())
 
 
 def add_discord_time_log(user_time_log, status):
+    header = {"Authorization": f"{access_token.get_token()}"}
     params = {"q":
                   json.dumps({"memberId": f"{user_time_log['memberId']}"})
               }
-    check_user = requests.get(f'{BASE_URL}DiscordUser', headers=HEADER, params=params)
+    check_user = requests.get(f'{BASE_URL}DiscordUser', headers=header, params=params)
     user_id = check_user.json()["data"][0]["id"]
     new_user_time_log = {
             "discordUser": f"{user_id}",
             "memberId": f"{user_time_log['memberId']}",
             "status": status,
         }
-    resp = requests.post(f'{BASE_URL}DiscordOnlineTimeLog', headers=HEADER, json=new_user_time_log)
+    resp = requests.post(f'{BASE_URL}DiscordOnlineTimeLog', headers=header, json=new_user_time_log)
     print(f"DiscordOnlineTimeLog {resp.status_code} {resp.json()}.")
-
-
-
-
-# users_list = requests.get(f'{BASE_URL}DiscordUser', headers=HEADER)
-# print (users_list.json()["data"])
-#
-# for i in users_list.json()["data"]:
-#     delete_user(i["id"])
