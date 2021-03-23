@@ -28,7 +28,7 @@ tzinfo = datetime.timezone(datetime.timedelta(hours=timezone_offset))
 
 @client.event
 async def on_ready():
-    print('ready-v0.03.13')
+    print('ready-v0.03.14')
 
 
 """auditlog-join-log"""
