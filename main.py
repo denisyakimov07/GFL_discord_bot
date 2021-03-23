@@ -122,7 +122,7 @@ CHANNELS_LOG = 818756453778063380  # auditlog-voice
 SERVER_LOG = 818756528176627743  # auditlog-join-log
 STREAM_LOG = 819783521907638344  # auditlog-event
 ROLES_LOG = 818756406496067604  # auditlog-roles
-
+MESSAGE_LOG = 818756504245108757 # auditlog-messages
 
 @client.event
 async def on_voice_state_update(member, before, after):
@@ -154,9 +154,6 @@ async def on_voice_state_update(member, before, after):
 
             """ADD user to API DB"""
             create_discord_user_api(new_user)
-
-
-
 
             """ADD time record DB"""
 
@@ -217,6 +214,25 @@ async def on_voice_state_update(member, before, after):
 
             """API"""
             add_discord_stream_time_log(new_user, status=False)
+
+
+"""auditlog-messages"""
+
+
+@client.event
+async def on_message(message):
+    if message.guild.id == GUILD and message.channel.id !=MESSAGE_LOG:
+        guild = client.get_guild(GUILD)
+        message_channel = guild.get_channel(MESSAGE_LOG)
+
+        description = f'Channel name - {message.channel.name} ```\n{message.content}```'
+
+        message_embed = discord.Embed(colour=discord.Colour(0xff2f),
+                              description=description,
+                              timestamp=datetime.datetime.now(tzinfo))
+
+        message_embed.set_footer(text=f"{message.author.name}", icon_url=f"{message.author.avatar_url}")
+        await message_channel.send(embed=message_embed)
 
 
 @client.command()
@@ -289,29 +305,6 @@ async def clear(ctx, amount=0):
 async def test(ctx):
     profile = await ctx.author.profile()
     await ctx.send(profile)
-
-
-# @client.event
-# async def on_member_update(before, after):
-#     print(before)
-#     print(after)
-#     try:
-#         activity = after.activity.type
-#     except:
-#         pass
-#
-#     if not before.activity.type == after.activity.type:
-#         return
-#
-#     channel = get(after.guild.channels, id=709285744794927125)
-#
-#     if isinstance(after.activity, Streaming):
-#         await channel.send(
-#             f"{before.mention} is streaming on {activity.platform}: {activity.name}.\nJoin here: {activity.url}")
-#     elif isinstance(before.activity, Streaming):
-#         await channel.send(f'{after.mention} is no longer streaming!')
-#     else:
-#         return
 
 
 if __name__ == '__main__':
