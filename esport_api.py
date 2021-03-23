@@ -58,6 +58,7 @@ DiscordUser = "DiscordUser"
 
 
 def get_user_by_id_from_api(new_user):
+    print(HEADER)
     params = {"q":
                   json.dumps({"memberId": f"{new_user['memberId']}"})
               }
@@ -74,6 +75,7 @@ def get_user_by_id_from_api(new_user):
 
 
 def create_discord_user_api(new_user):
+    print(HEADER)
     user_status = get_user_by_id_from_api(new_user)
     if not user_status:
         resp = requests.post(f'{BASE_URL}DiscordUser', headers=HEADER, json=new_user)
@@ -86,7 +88,28 @@ def create_discord_user_api(new_user):
 
 
 
-def delete_user():
-    check_user = requests.delete(f'{BASE_URL}DiscordUser/{"6053cb7f1a633f001cf7c2d9"}', headers=HEADER)
+def delete_user(user_id):
+    check_user = requests.delete(f'{BASE_URL}DiscordUser/{user_id}', headers=HEADER)
     print(check_user)
     print(check_user.json())
+
+
+def add_discord_time_log():
+    pass
+
+
+
+
+
+
+
+
+
+
+
+
+# users_list = requests.get(f'{BASE_URL}DiscordUser', headers=HEADER)
+# print (users_list.json()["data"])
+#
+# for i in users_list.json()["data"]:
+#     delete_user(i["id"])
