@@ -42,7 +42,7 @@ class AccessToken:
             print(token)
             # token can be expired.
             self.refresh_token()
-        print(token)
+        print(self.token)
         return self.token
 
 
