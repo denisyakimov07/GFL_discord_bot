@@ -63,7 +63,6 @@ def get_user_by_id_from_api(new_user):
               }
     try:
         check_user = requests.get(f'{BASE_URL}DiscordUser', headers=HEADER, params=params)
-        print(check_user.json())
         if len(check_user.json()["data"]) == 0:
             print(f"User was no found {new_user}.")
             return False
@@ -76,15 +75,14 @@ def get_user_by_id_from_api(new_user):
 
 def create_discord_user_api(new_user):
     user_status = get_user_by_id_from_api(new_user)
-    print(token)
     if not user_status:
         resp = requests.post(f'{BASE_URL}DiscordUser', headers=HEADER, json=new_user)
         if resp.status_code == 200:
-            print(resp.json())
+            print(f"User was create {new_user}.")
         else:
-            print(f"User was create {resp.status_code} {resp.json()}.")
+            print(f"User was not create {resp.status_code} {resp.json()}.")
     else:
-        pass
+        print(f"User already exist {new_user}")
 
 
 

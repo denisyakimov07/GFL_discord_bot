@@ -142,18 +142,18 @@ async def on_voice_state_update(member, before, after):
 
             """ADD user to DB"""
             check_user = DiscordUser(member_name=str(member),
-                                     member_id=int(member.id),
+                                     member_id=str(member.id),
                                      member_nickname=str(member.nick),
                                      avatar_url=member.avatar_url)
 
             discord_user_create(check_user)
 
             """ADD user to API DB"""
-            new_user = {"memberName": str(member),
-                        "memberId": str(member.id),
-                        "avatarUrl": member.avatar_url
+            new_user = {"memberName": f"{member}",
+                        "memberId": f"{member.id}",
+                        "avatarUrl": f"{member.avatar_url}"
                         }
-            #create_discord_user_api(new_user)
+            create_discord_user_api(new_user)
 
 
             """ADD time record DB"""
