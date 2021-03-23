@@ -7,7 +7,7 @@ import datetime
 
 import config
 from db_functions import add_record_log, discord_user_create
-from esport_api import create_discord_user_api
+from esport_api import create_discord_user_api, add_discord_time_log
 from models import DiscordUser, OnlineTimeLog, OnlineStreamTimeLog, UserVerifiedLog
 from apex_api import get_apex_rank
 
@@ -156,10 +156,14 @@ async def on_voice_state_update(member, before, after):
             create_discord_user_api(new_user)
 
 
+
+
             """ADD time record DB"""
 
             time_log = OnlineTimeLog(member_id=member.id, status=True)
             add_record_log(time_log)
+            """API"""
+            add_discord_time_log(new_user, status=True)
 
         if before.channel and not after.channel:
             left_embed = discord.Embed(colour=discord.Colour(0xff001f),
@@ -172,6 +176,12 @@ async def on_voice_state_update(member, before, after):
 
             time_log = OnlineTimeLog(member_id=member.id, status=False)
             add_record_log(time_log)
+            """API"""
+            new_user = {"memberName": f"{member}",
+                        "memberId": f"{member.id}",
+                        "avatarUrl": f"{member.avatar_url}"
+                        }
+            add_discord_time_log(new_user, status=False)
 
         if before.channel and after.channel and before.channel != after.channel:
             switched_embed = discord.Embed(colour=discord.Colour(0xffea00),

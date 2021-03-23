@@ -4,7 +4,6 @@ import json
 import time
 
 
-
 def get_new_access_token():
     body = {"client_id": config.ESPORT_ID,
             "client_secret": config.ESPORT_SECRET_KEY_API,
@@ -50,7 +49,6 @@ class AccessToken:
 access_token = AccessToken()
 token = access_token.get_token()
 
-
 # 401
 HEADER = {"Authorization": f"{token}",
           "Content-Type": "application/json"
@@ -90,23 +88,25 @@ def create_discord_user_api(new_user):
         print(f"User already exist {new_user}")
 
 
-
 def delete_user(user_id):
     check_user = requests.delete(f'{BASE_URL}DiscordUser/{user_id}', headers=HEADER)
     print(check_user)
     print(check_user.json())
 
 
-def add_discord_time_log():
-    pass
-
-
-
-
-
-
-
-
+def add_discord_time_log(user_time_log, status):
+    params = {"q":
+                  json.dumps({"memberId": f"{user_time_log['memberId']}"})
+              }
+    check_user = requests.get(f'{BASE_URL}DiscordUser', headers=HEADER, params=params)
+    user_id = check_user.json()["data"][0]["id"]
+    new_user_time_log = {
+            "discordUser": f"{user_id}",
+            "memberId": f"{user_time_log['memberId']}",
+            "status": status,
+        }
+    resp = requests.post(f'{BASE_URL}DiscordOnlineTimeLog', headers=HEADER, json=new_user_time_log)
+    print(f"DiscordOnlineTimeLog {resp.status_code} {resp.json()}.")
 
 
 
