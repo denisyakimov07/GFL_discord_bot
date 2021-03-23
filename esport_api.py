@@ -38,9 +38,11 @@ class AccessToken:
 
     def get_token(self):
         if time.time() > self.token_gen_time + self.TOKEN_TTL:
+            print(f"time {time.time()} - {self.token_gen_time + self.TOKEN_TTL}")
             print(token)
             # token can be expired.
             self.refresh_token()
+        print(token)
         return self.token
 
 
