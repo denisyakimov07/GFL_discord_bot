@@ -43,6 +43,7 @@ class AccessToken:
             # token can be expired.
             self.refresh_token()
         print(self.token)
+        print(f"time {time.time()} - {self.token_gen_time + self.TOKEN_TTL}")
         return self.token
 
 
