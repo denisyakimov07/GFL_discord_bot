@@ -115,6 +115,10 @@ async def on_raw_reaction_add(payload):
                 role_add_log = UserVerifiedLog(member_id=new_user_id, admin_id=member.id)
                 add_record_log(role_add_log)
 
+@client.command()
+async def clear(ctx, amount=0):
+    if ctx.author.id == 339287982320254976:
+        await ctx.channel.purge(limit=amount + 1)
 
 """Log system"""
 GUILD = 696277112600133633
@@ -219,20 +223,20 @@ async def on_voice_state_update(member, before, after):
 """auditlog-messages"""
 
 
-@client.event
-async def on_message(message):
-    if message.guild.id == GUILD and message.channel.id !=MESSAGE_LOG:
-        guild = client.get_guild(GUILD)
-        message_channel = guild.get_channel(MESSAGE_LOG)
-
-        description = f'Channel name - {message.channel.name} ```\n{message.content}```'
-
-        message_embed = discord.Embed(colour=discord.Colour(0xff2f),
-                              description=description,
-                              timestamp=datetime.datetime.now(tzinfo))
-
-        message_embed.set_footer(text=f"{message.author.name}", icon_url=f"{message.author.avatar_url}")
-        await message_channel.send(embed=message_embed)
+# @client.event
+# async def on_message(message):
+#     if message.guild.id == GUILD and message.channel.id != MESSAGE_LOG:
+#         guild = client.get_guild(GUILD)
+#         message_channel = guild.get_channel(MESSAGE_LOG)
+#
+#         description = f'Channel name - {message.channel.name} ```\n{message.content}```'
+#
+#         message_embed = discord.Embed(colour=discord.Colour(0xff2f),
+#                               description=description,
+#                               timestamp=datetime.datetime.now(tzinfo))
+#
+#         message_embed.set_footer(text=f"{message.author.name}", icon_url=f"{message.author.avatar_url}")
+#         await message_channel.send(embed=message_embed)
 
 
 @client.command()
@@ -295,10 +299,7 @@ async def verify(ctx, user_name=None):
             await ctx.send('No permission to verify users')
 
 
-@client.command()
-async def clear(ctx, amount=0):
-    if ctx.author.id == 339287982320254976:
-        await ctx.channel.purge(limit=amount + 1)
+
 
 
 @client.command()
