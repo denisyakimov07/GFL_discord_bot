@@ -109,3 +109,19 @@ def add_discord_time_log(user_time_log, status):
         }
     resp = requests.post(f'{BASE_URL}DiscordOnlineTimeLog', headers=header, json=new_user_time_log)
     print(f"DiscordOnlineTimeLog {resp.status_code} {resp.json()}.")
+
+
+def add_discord_stream_time_log(user_time_log, status):
+    header = {"Authorization": f"{access_token.get_token()}"}
+    params = {"q":
+                  json.dumps({"memberId": f"{user_time_log['memberId']}"})
+              }
+    check_user = requests.get(f'{BASE_URL}DiscordUser', headers=header, params=params)
+    user_id = check_user.json()["data"][0]["id"]
+    new_user_time_log = {
+            "discordUser": f"{user_id}",
+            "memberId": f"{user_time_log['memberId']}",
+            "status": status,
+        }
+    resp = requests.post(f'{BASE_URL}DiscordOnlineStreamTimeLog', headers=header, json=new_user_time_log)
+    print(f"DiscordOnlineTimeLog {resp.status_code} {resp.json()}.")
