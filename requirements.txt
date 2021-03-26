@@ -14,6 +14,7 @@ mysql==0.0.2
 mysqlclient==2.0.3
 psycopg2==2.8.6
 python-dateutil==2.8.1
+python-dotenv==0.15.0
 python-editor==1.0.4
 requests==2.25.1
 six==1.15.0
