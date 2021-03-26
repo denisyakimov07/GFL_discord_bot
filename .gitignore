@@ -4,3 +4,5 @@ venv/
 /.git
 /venv/
 /venv/
+.env
+env/
