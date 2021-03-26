@@ -1,15 +1,20 @@
 import discord
 from discord.ext import commands
-from discord import Streaming
-from discord.utils import get
+
 
 import datetime
+import os
 
-import config
 from db_functions import add_record_log, discord_user_create
 from esport_api import create_discord_user_api, add_discord_time_log, add_discord_stream_time_log
 from models import DiscordUser, OnlineTimeLog, OnlineStreamTimeLog, UserVerifiedLog
 from apex_api import get_apex_rank
+
+from dotenv import load_dotenv
+load_dotenv()
+
+TOKEN = os.getenv("TOKEN")
+
 
 intents = discord.Intents.default()
 intents.members = True
@@ -28,7 +33,7 @@ tzinfo = datetime.timezone(datetime.timedelta(hours=timezone_offset))
 
 @client.event
 async def on_ready():
-    print('ready-v0.03.14')
+    print('ready-v0.04.0')
 
 
 """auditlog-join-log"""
@@ -86,6 +91,11 @@ ROLE_ALLOWED_TO_VERIFY_ID = [
 BOT_ID = 786029312788791346
 VERIFY_ROLE_ID = 703686185968599111
 
+settings = {"ROLE_ALLOWED_TO_VERIFY_ID": [818901497244024842, 722195472411787455, ],
+            "BOT_ID": 696277516020875324,
+            "VERIFY_ROLE_ID": 703686185968599111
+            }
+
 
 @client.event
 async def on_raw_reaction_add(payload):
@@ -115,10 +125,12 @@ async def on_raw_reaction_add(payload):
                 role_add_log = UserVerifiedLog(member_id=new_user_id, admin_id=member.id)
                 add_record_log(role_add_log)
 
+
 @client.command()
 async def clear(ctx, amount=0):
     if ctx.author.id == 339287982320254976:
         await ctx.channel.purge(limit=amount + 1)
+
 
 """Log system"""
 GUILD = 696277112600133633
@@ -126,7 +138,8 @@ CHANNELS_LOG = 818756453778063380  # auditlog-voice
 SERVER_LOG = 818756528176627743  # auditlog-join-log
 STREAM_LOG = 819783521907638344  # auditlog-event
 ROLES_LOG = 818756406496067604  # auditlog-roles
-MESSAGE_LOG = 818756504245108757 # auditlog-messages
+MESSAGE_LOG = 818756504245108757  # auditlog-messages
+
 
 @client.event
 async def on_voice_state_update(member, before, after):
@@ -220,25 +233,6 @@ async def on_voice_state_update(member, before, after):
             add_discord_stream_time_log(new_user, status=False)
 
 
-"""auditlog-messages"""
-
-
-# @client.event
-# async def on_message(message):
-#     if message.guild.id == GUILD and message.channel.id != MESSAGE_LOG:
-#         guild = client.get_guild(GUILD)
-#         message_channel = guild.get_channel(MESSAGE_LOG)
-#
-#         description = f'Channel name - {message.channel.name} ```\n{message.content}```'
-#
-#         message_embed = discord.Embed(colour=discord.Colour(0xff2f),
-#                               description=description,
-#                               timestamp=datetime.datetime.now(tzinfo))
-#
-#         message_embed.set_footer(text=f"{message.author.name}", icon_url=f"{message.author.avatar_url}")
-#         await message_channel.send(embed=message_embed)
-
-
 @client.command()
 async def rank(ctx, user_name=None):
     if str(ctx.channel.id) in BOT_COMAND_channels_ID:
@@ -299,9 +293,6 @@ async def verify(ctx, user_name=None):
             await ctx.send('No permission to verify users')
 
 
-
-
-
 @client.command()
 async def test(ctx):
     profile = await ctx.author.profile()
@@ -309,4 +300,4 @@ async def test(ctx):
 
 
 if __name__ == '__main__':
-    client.run(config.TOKEN)
+    client.run(TOKEN)

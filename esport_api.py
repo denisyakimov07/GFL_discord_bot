@@ -1,12 +1,20 @@
+import os
+
 import requests
-import config
+
 import json
 import time
 
+from dotenv import load_dotenv
+load_dotenv()
+
+ESPORT_ID = os.getenv("ESPORT_ID")
+ESPORT_SECRET_KEY_API = os.getenv("ESPORT_SECRET_KEY_API")
+
 
 def get_new_access_token():
-    body = {"client_id": config.ESPORT_ID,
-            "client_secret": config.ESPORT_SECRET_KEY_API,
+    body = {"client_id": ESPORT_ID,
+            "client_secret": ESPORT_SECRET_KEY_API,
             "scope": "discord",
             "grant_type": "client_credentials"
             }
@@ -47,18 +55,13 @@ class AccessToken:
 
 
 access_token = AccessToken()
-token = access_token.get_token()
 
-# 401
-# HEADER = {"Authorization": f"{access_token.get_token()}",
-#           "Content-Type": "application/json"
-#           }
+
 BASE_URL = "https://gamersforlife.herokuapp.com/api/model/"
 GET_NEW_TOKEN_URL = "oauth/token"
 DiscordUser = "DiscordUser"
 
-
-def get_user_by_id_from_api(new_user):
+def get_user_status_by_id_from_api(new_user):
     header = {"Authorization": f"{access_token.get_token()}"}
     params = {"q":
                   json.dumps({"memberId": f"{new_user['memberId']}"})
@@ -77,7 +80,7 @@ def get_user_by_id_from_api(new_user):
 
 def create_discord_user_api(new_user):
     header = {"Authorization": f"{access_token.get_token()}"}
-    user_status = get_user_by_id_from_api(new_user)
+    user_status = get_user_status_by_id_from_api(new_user)
     if not user_status:
         resp = requests.post(f'{BASE_URL}DiscordUser', headers=header, json=new_user)
         if resp.status_code == 200:
@@ -125,3 +128,11 @@ def add_discord_stream_time_log(user_time_log, status):
         }
     resp = requests.post(f'{BASE_URL}DiscordOnlineStreamTimeLog', headers=header, json=new_user_time_log)
     print(f"DiscordOnlineTimeLog {resp.status_code} {resp.json()}.")
+
+
+def get_user_api_id_by_discord_id(user):
+    header = {"Authorization": f"{access_token.get_token()}"}
+    params = {"q":
+                  json.dumps({"memberId": f"{user['memberId']}"})
+              }
+    pass
