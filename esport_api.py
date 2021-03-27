@@ -10,6 +10,9 @@ load_dotenv()
 
 ESPORT_ID = os.getenv("ESPORT_ID")
 ESPORT_SECRET_KEY_API = os.getenv("ESPORT_SECRET_KEY_API")
+BASE_URL = "https://gamersforlife.herokuapp.com/api/model/"
+GET_NEW_TOKEN_URL = "oauth/token"
+DiscordUser = "DiscordUser"
 
 
 def get_new_access_token():
@@ -20,12 +23,10 @@ def get_new_access_token():
             }
     try:
         resp = requests.post(f'https://gamersforlife.herokuapp.com/oauth/token', json=body)
-        print(resp.json())
-        access_token = resp.json()['accessToken']
+        new_access_token = resp.json()['accessToken']
         if resp.status_code == 200:
             print("New token was create")
-            print(resp.json())
-            return f"Bearer {access_token}"
+            return f"Bearer {new_access_token}"
         else:
             print(f"Failed to create new token{resp.status_code}{resp.json()}")
     except:
@@ -42,24 +43,19 @@ class AccessToken:
     def refresh_token(self):
         self.token = get_new_access_token()
         self.token_gen_time = time.time()  # When token was made
+        print(f"Generate new token token - {self.token}")
 
     def get_token(self):
         if time.time() > self.token_gen_time + self.TOKEN_TTL:
-            print(f"time {time.time()} - {self.token_gen_time + self.TOKEN_TTL}")
-            print(token)
             # token can be expired.
             self.refresh_token()
-        print(self.token)
-        print(f"time {time.time()} - {self.token_gen_time + self.TOKEN_TTL}")
+            print(f"Token expire - {self.token}")
+        print(f"Return token - {self.token}")
         return self.token
 
 
 access_token = AccessToken()
 
-
-BASE_URL = "https://gamersforlife.herokuapp.com/api/model/"
-GET_NEW_TOKEN_URL = "oauth/token"
-DiscordUser = "DiscordUser"
 
 def get_user_status_by_id_from_api(new_user):
     header = {"Authorization": f"{access_token.get_token()}"}
@@ -135,4 +131,11 @@ def get_user_api_id_by_discord_id(user):
     params = {"q":
                   json.dumps({"memberId": f"{user['memberId']}"})
               }
-    pass
+    try:
+        check_user = requests.get(f'{BASE_URL}DiscordUser', headers=header, params=params)
+        user_id = check_user.json()["data"][0]["id"]
+        return user_id
+    except:
+        return
+
+

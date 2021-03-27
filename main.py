@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 
-
 import datetime
 import os
 
@@ -11,10 +10,10 @@ from models import DiscordUser, OnlineTimeLog, OnlineStreamTimeLog, UserVerified
 from apex_api import get_apex_rank
 
 from dotenv import load_dotenv
+
 load_dotenv()
 
 TOKEN = os.getenv("TOKEN")
-
 
 intents = discord.Intents.default()
 intents.members = True
@@ -294,9 +293,31 @@ async def verify(ctx, user_name=None):
 
 
 @client.command()
-async def test(ctx):
-    profile = await ctx.author.profile()
-    await ctx.send(profile)
+async def edit_nick(ctx):
+    if ctx.author.id == 339287982320254976:
+        i = 0
+        role_id_list = []
+        for member in ctx.guild.members:
+
+            for role in member.roles:
+                role_id_list.append(role.id)
+            if 818901497244024842 in role_id_list:
+                i += 1
+                if member.nick is None:
+                    nick_name = str(member.name).replace("]TPG[", "")
+                else:
+                    nick_name = str(member.nick).replace("]TPG[", "").replace("NS_", "")
+
+                print(f"{member} - {member.nick}")
+                try:
+                    await member.edit(nick=f"NS_{nick_name}")
+                    print(f"{member} - {member.nick}---{nick_name}")
+                    print(role_id_list)
+                    role_id_list = []
+                except:
+                    print(f"can't change {member}")
+                    role_id_list = []
+        print(i)
 
 
 if __name__ == '__main__':
