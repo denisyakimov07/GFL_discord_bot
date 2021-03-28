@@ -118,7 +118,7 @@ async def on_raw_reaction_add(payload):
                 new_user = await guild.fetch_member(int(new_user_id))
                 role = discord.utils.get(member.guild.roles, id=VERIFY_ROLE_ID)
                 await new_user.add_roles(role)
-                # await msg.delete()
+                await msg.delete()
 
                 channel_id = payload.channel_id
                 channel = client.get_channel(channel_id)
@@ -293,7 +293,7 @@ async def verify(ctx, user_name=None):
                 role = discord.utils.get(member.guild.roles, id=VERIFY_ROLE_ID)
                 await member.add_roles(role)
                 success_embed = discord.Embed(colour=discord.Colour(0x8aff02),
-                                              description=f"\n✅ User verified. {member.mention}",
+                                              description=f"\n✅ User verified! {member.mention}",
                                               timestamp=datetime.datetime.now(tzinfo))
                 success_embed.set_author(name=f"{member}", icon_url=f"{member.avatar_url}")
                 success_embed.set_footer(text=f"{author}", icon_url=f"{author.avatar_url}")
