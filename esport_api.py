@@ -14,7 +14,7 @@ ESPORT_SECRET_KEY_API = os.getenv("ESPORT_SECRET_KEY_API")
 BASE_URL = "https://gamersforlife.herokuapp.com/api/model/"
 GET_NEW_TOKEN_URL = "oauth/token"
 DiscordUser = "DiscordUser"
-
+cached_get_user_api_id_by_discord_id = {}
 
 def get_new_access_token():
     body = {"client_id": ESPORT_ID,
@@ -102,11 +102,13 @@ def add_discord_stream_time_log(user, status):
 
 
 def get_user_api_id_by_discord_id(user):
-    cached = {}
 
-    if user['memberId'] in cached:
-        print(f"User_api_id get from cache {user['memberId']} = {cached[user['memberId']]}")
-        return cached[user['memberId']]
+    print (user['memberId'])
+    print (cached_get_user_api_id_by_discord_id)
+
+    if str(user['memberId']) in cached_get_user_api_id_by_discord_id:
+        print(f"User_api_id get from cache {user['memberId']} = {cached_get_user_api_id_by_discord_id[user['memberId']]}")
+        return cached_get_user_api_id_by_discord_id[user['memberId']]
     else:
         header = {"Authorization": f"{access_token.get_token()}"}
         params = {"q":
@@ -117,7 +119,7 @@ def get_user_api_id_by_discord_id(user):
             if len(check_user.json()["data"]) > 0:
                 user_id = check_user.json()["data"][0]["id"]
                 print(f"User found discord id - {user['memberId']}, api_id - {user_id}")
-                cached[user['memberId']] = user_id
+                cached_get_user_api_id_by_discord_id[str(user['memberId'])] = str(user_id)
                 return user_id
             else:
                 print(f"User is not found discord id - {user['memberId']}")
