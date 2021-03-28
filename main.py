@@ -5,7 +5,7 @@ import datetime
 import os
 
 from db_functions import add_record_log, discord_user_create
-from esport_api import create_discord_user_api, add_discord_time_log, add_discord_stream_time_log
+from esport_api import create_discord_user_api, add_discord_time_log, add_discord_stream_time_log, verified_by_member
 from models import DiscordUser, OnlineTimeLog, OnlineStreamTimeLog, UserVerifiedLog
 from apex_api import get_apex_rank
 
@@ -57,9 +57,15 @@ VERIFICATION_CHANNEL_ID = [709285744794927125, 819347673575456769]  # Discord TP
 @client.event
 async def on_member_join(member):
     if member.guild.id == GUILD:
+        new_user = {"memberName": f"{member}",
+                    "memberId": f"{member.id}",
+                    "avatarUrl": f"{member.avatar_url}"
+                    }
         guild = client.get_guild(GUILD)
         channel = guild.get_channel(SERVER_LOG)
         verify_channel = guild.get_channel(709285744794927125)
+        """ADD user to API DB"""
+        create_discord_user_api(new_user)
 
         join_to_server_embed = discord.Embed(colour=discord.Colour(0x89ff00),
                                              timestamp=datetime.datetime.now(tzinfo),
@@ -74,6 +80,7 @@ async def on_member_join(member):
         verify_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
         msg = await verify_channel.send(embed=verify_embed)
         await msg.add_reaction("✅")
+
 
 
 """Server role manager"""
@@ -111,7 +118,7 @@ async def on_raw_reaction_add(payload):
                 new_user = await guild.fetch_member(int(new_user_id))
                 role = discord.utils.get(member.guild.roles, id=VERIFY_ROLE_ID)
                 await new_user.add_roles(role)
-                await msg.delete()
+                # await msg.delete()
 
                 channel_id = payload.channel_id
                 channel = client.get_channel(channel_id)
@@ -123,6 +130,10 @@ async def on_raw_reaction_add(payload):
                 await channel.send(embed=success_embed)
                 role_add_log = UserVerifiedLog(member_id=new_user_id, admin_id=member.id)
                 add_record_log(role_add_log)
+
+                """API"""
+                new_user = {"memberId": f"{new_user.id}"}
+                verified_by_member(new_user, str(member.id))
 
 
 @client.command()
@@ -288,7 +299,6 @@ async def verify(ctx, user_name=None):
                 success_embed.set_footer(text=f"{author}", icon_url=f"{author.avatar_url}")
                 await ctx.send(embed=success_embed)
             await ctx.send('User already verified')
-
         else:
             await ctx.send('No permission to verify users')
 

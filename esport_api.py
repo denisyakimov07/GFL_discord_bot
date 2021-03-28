@@ -102,10 +102,6 @@ def add_discord_stream_time_log(user, status):
 
 
 def get_user_api_id_by_discord_id(user):
-
-    print (user['memberId'])
-    print (cached_get_user_api_id_by_discord_id)
-
     if str(user['memberId']) in cached_get_user_api_id_by_discord_id:
         print(f"User_api_id get from cache {user['memberId']} = {cached_get_user_api_id_by_discord_id[user['memberId']]}")
         return cached_get_user_api_id_by_discord_id[user['memberId']]
@@ -126,3 +122,11 @@ def get_user_api_id_by_discord_id(user):
         except Exception as ex:
             print(f"Bad request, discord id - {user['memberId']}, Exception {ex}.")
             return
+
+
+def verified_by_member(new_user_id, admin_user_id):
+    header = {"Authorization": f"{access_token.get_token()}"}
+    new_user_api_id = get_user_api_id_by_discord_id(new_user_id)
+    user_verified_by = {"verifiedByMemberId": f"{admin_user_id}"}
+    resp = requests.put(f'{BASE_URL}DiscordUser/{new_user_api_id}', headers=header, json=user_verified_by)
+    print(resp)
