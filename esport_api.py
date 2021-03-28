@@ -104,7 +104,7 @@ def add_discord_stream_time_log(user, status):
 def get_user_api_id_by_discord_id(user):
     cached = {}
 
-    if user['memberId'] in create_discord_user_api:
+    if user['memberId'] in cached:
         print(f"User_api_id get from cache {user['memberId']} = {cached[user['memberId']]}")
         return cached[user['memberId']]
     else:
