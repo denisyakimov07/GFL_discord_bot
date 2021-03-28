@@ -32,7 +32,7 @@ tzinfo = datetime.timezone(datetime.timedelta(hours=timezone_offset))
 
 @client.event
 async def on_ready():
-    print('ready-v0.04.0')
+    print('ready-v0.04.1')
 
 
 """auditlog-join-log"""
@@ -271,6 +271,7 @@ async def verify(ctx, user_name=None):
         author = ctx.message.author
         user_roles_list = [role.id for role in author.roles]
         intersection_roles = set(user_roles_list) & set(ROLE_ALLOWED_TO_VERIFY_ID)
+        member = None
         if len(intersection_roles) > 0:
             try:
                 member = discord.utils.get(client.get_all_members(), name=user_name.split("#")[0],

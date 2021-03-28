@@ -6,6 +6,7 @@ import json
 import time
 
 from dotenv import load_dotenv
+
 load_dotenv()
 
 ESPORT_ID = os.getenv("ESPORT_ID")
@@ -29,8 +30,8 @@ def get_new_access_token():
             return f"Bearer {new_access_token}"
         else:
             print(f"Failed to create new token{resp.status_code}{resp.json()}")
-    except:
-        print(f"resp was not create")
+    except Exception as ex:
+        print(f"Token (resp) was not create {ex}")
 
 
 class AccessToken:
@@ -57,85 +58,69 @@ class AccessToken:
 access_token = AccessToken()
 
 
-def get_user_status_by_id_from_api(new_user):
-    header = {"Authorization": f"{access_token.get_token()}"}
-    params = {"q":
-                  json.dumps({"memberId": f"{new_user['memberId']}"})
-              }
-    try:
-        check_user = requests.get(f'{BASE_URL}DiscordUser', headers=header, params=params)
-        if len(check_user.json()["data"]) == 0:
-            print(f"User was no found {new_user}.")
-            return False
-        else:
-            print(f"User was found {new_user}.")
-            return True
-    except:
-        print(f"Cant check user")
-
-
 def create_discord_user_api(new_user):
     header = {"Authorization": f"{access_token.get_token()}"}
-    user_status = get_user_status_by_id_from_api(new_user)
+    user_status = get_user_api_id_by_discord_id(new_user)
     if not user_status:
         resp = requests.post(f'{BASE_URL}DiscordUser', headers=header, json=new_user)
         if resp.status_code == 200:
-            print(f"User was create {new_user}.")
+            print(f"New user was create {new_user}.")
         else:
-            print(f"User was not create {resp.status_code} {resp.json()}.")
+            print(f"New user was not create {resp.status_code} {resp.json()}.")
     else:
         print(f"User already exist {new_user}")
 
 
-def delete_user(user_id):
+def add_discord_time_log(user, status):
     header = {"Authorization": f"{access_token.get_token()}"}
-    check_user = requests.delete(f'{BASE_URL}DiscordUser/{user_id}', headers=header)
-    print(check_user)
-    print(check_user.json())
-
-
-def add_discord_time_log(user_time_log, status):
-    header = {"Authorization": f"{access_token.get_token()}"}
-    params = {"q":
-                  json.dumps({"memberId": f"{user_time_log['memberId']}"})
-              }
-    check_user = requests.get(f'{BASE_URL}DiscordUser', headers=header, params=params)
-    user_id = check_user.json()["data"][0]["id"]
+    user_api_id = get_user_api_id_by_discord_id(user)
     new_user_time_log = {
-            "discordUser": f"{user_id}",
-            "memberId": f"{user_time_log['memberId']}",
-            "status": status,
-        }
-    resp = requests.post(f'{BASE_URL}DiscordOnlineTimeLog', headers=header, json=new_user_time_log)
-    print(f"DiscordOnlineTimeLog {resp.status_code} {resp.json()}.")
+        "discordUser": f"{user_api_id}",
+        "memberId": f"{user['memberId']}",
+        "status": status,
+    }
+    if user_api_id is not None:
+        resp = requests.post(f'{BASE_URL}DiscordOnlineTimeLog', headers=header, json=new_user_time_log)
+        print(f"DiscordOnlineTimeLog {resp.status_code} {resp.json()}.")
+    else:
+        print(f"Time log was not added - {user} - is None")
 
 
-def add_discord_stream_time_log(user_time_log, status):
+def add_discord_stream_time_log(user, status):
     header = {"Authorization": f"{access_token.get_token()}"}
-    params = {"q":
-                  json.dumps({"memberId": f"{user_time_log['memberId']}"})
-              }
-    check_user = requests.get(f'{BASE_URL}DiscordUser', headers=header, params=params)
-    user_id = check_user.json()["data"][0]["id"]
+    user_api_id = get_user_api_id_by_discord_id(user)
     new_user_time_log = {
-            "discordUser": f"{user_id}",
-            "memberId": f"{user_time_log['memberId']}",
-            "status": status,
-        }
-    resp = requests.post(f'{BASE_URL}DiscordOnlineStreamTimeLog', headers=header, json=new_user_time_log)
-    print(f"DiscordOnlineTimeLog {resp.status_code} {resp.json()}.")
+        "discordUser": f"{user_api_id}",
+        "memberId": f"{user['memberId']}",
+        "status": status,
+    }
+    if user_api_id is not None:
+        resp = requests.post(f'{BASE_URL}DiscordOnlineStreamTimeLog', headers=header, json=new_user_time_log)
+        print(f"DiscordOnlineStreamTimeLog {resp.status_code} {resp.json()}.")
+    else:
+        print(f"Stream log was not added - {user} - is None")
 
 
 def get_user_api_id_by_discord_id(user):
-    header = {"Authorization": f"{access_token.get_token()}"}
-    params = {"q":
-                  json.dumps({"memberId": f"{user['memberId']}"})
-              }
-    try:
-        check_user = requests.get(f'{BASE_URL}DiscordUser', headers=header, params=params)
-        user_id = check_user.json()["data"][0]["id"]
-        return user_id
-    except:
-        return
+    cached = {}
 
-
+    if user['memberId'] in create_discord_user_api:
+        print(f"User_api_id get from cache {user['memberId']} = {cached[user['memberId']]}")
+        return cached[user['memberId']]
+    else:
+        header = {"Authorization": f"{access_token.get_token()}"}
+        params = {"q":
+                      json.dumps({"memberId": f"{user['memberId']}"})
+                  }
+        try:
+            check_user = requests.get(f'{BASE_URL}DiscordUser', headers=header, params=params)
+            if len(check_user.json()["data"]) > 0:
+                user_id = check_user.json()["data"][0]["id"]
+                print(f"User found discord id - {user['memberId']}, api_id - {user_id}")
+                cached[user['memberId']] = user_id
+                return user_id
+            else:
+                print(f"User is not found discord id - {user['memberId']}")
+        except Exception as ex:
+            print(f"Bad request, discord id - {user['memberId']}, Exception {ex}.")
+            return
