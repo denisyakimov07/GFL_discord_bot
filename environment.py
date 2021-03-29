@@ -23,7 +23,7 @@ class _Environment:
         self.PORT = int(os.getenv('PORT') or 8082)
 
     def __str__(self):
-        return f'DISCORD_BOT_TOKEN=${self.DISCORD_BOT_TOKEN}\nDISCORD_CLIENT_ID=${self.DISCORD_CLIENT_ID}'
+        return f'DISCORD_BOT_TOKEN={self.DISCORD_BOT_TOKEN}\nDISCORD_CLIENT_ID={self.DISCORD_CLIENT_ID}'
 
 __environment = _Environment()
 

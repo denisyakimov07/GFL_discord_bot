@@ -5,15 +5,15 @@ from discord.ext import commands
 import datetime
 import os
 
-from db_functions import add_record_log, discord_user_create
-from esport_api import create_discord_user_api, add_discord_time_log, add_discord_stream_time_log
+from esport_api import create_discord_user_api, add_discord_time_log, add_discord_stream_time_log, \
+    get_or_create_discord_server_settings, check_webhook_subscriptions, add_roles_to_server_settings
 from models import DiscordUser, OnlineTimeLog, OnlineStreamTimeLog, UserVerifiedLog
 from apex_api import get_apex_rank
 
 from dotenv import load_dotenv
 load_dotenv()
 
-TOKEN = os.getenv("TOKEN")
+TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 
 
 intents = discord.Intents.default()
@@ -30,11 +30,21 @@ BOT_COMAND_channels_ID = ["788693067757781023", "816203477801762836"]
 timezone_offset = 8.0  # Pacific Standard Time (UTC−08:00)
 tzinfo = datetime.timezone(datetime.timedelta(hours=timezone_offset))
 
+guild_settings_dict: dict = {}
+
+# Create webhooks if they don't exist
+check_webhook_subscriptions()
 
 @client.event
 async def on_ready():
-    print('ready-v0.04.0')
+    # Get or create all current guilds the bot belongs to
+    guild_settings_dict.update(get_or_create_discord_server_settings(client.guilds))
 
+@client.event
+async def on_guild_join(guild: discord.Guild):
+    # Get or create DiscordServerSettings if the guild has not been added before
+    guild_settings_dict.update(get_or_create_discord_server_settings([guild]))
+    add_roles_to_server_settings([guild], guild_settings_dict)
 
 """auditlog-join-log"""
 
@@ -123,7 +133,6 @@ async def on_raw_reaction_add(payload):
                 success_embed.set_footer(text=f"{member}", icon_url=f"{member.avatar_url}")
                 await channel.send(embed=success_embed)
                 role_add_log = UserVerifiedLog(member_id=new_user_id, admin_id=member.id)
-                add_record_log(role_add_log)
 
 
 @client.command()
@@ -167,7 +176,6 @@ async def on_voice_state_update(member, before, after):
                                      member_nickname=str(member.nick),
                                      avatar_url=member.avatar_url)
 
-            discord_user_create(check_user)
 
             """ADD user to API DB"""
             create_discord_user_api(new_user)
@@ -175,7 +183,6 @@ async def on_voice_state_update(member, before, after):
             """ADD time record DB"""
 
             time_log = OnlineTimeLog(member_id=member.id, status=True)
-            add_record_log(time_log)
             """API"""
             add_discord_time_log(new_user, status=True)
 
@@ -189,7 +196,6 @@ async def on_voice_state_update(member, before, after):
             """ADD time record DB"""
 
             time_log = OnlineTimeLog(member_id=member.id, status=False)
-            add_record_log(time_log)
 
             """API"""
             add_discord_time_log(new_user, status=False)
@@ -212,7 +218,6 @@ async def on_voice_state_update(member, before, after):
             """ADD stream time record DB"""
 
             time_log = OnlineStreamTimeLog(member_id=member.id, status=True)
-            add_record_log(time_log)
 
             """API"""
             add_discord_stream_time_log(new_user, status=True)
@@ -227,7 +232,6 @@ async def on_voice_state_update(member, before, after):
             """ADD stream time record DB"""
 
             time_log = OnlineStreamTimeLog(member_id=member.id, status=False)
-            add_record_log(time_log)
 
             """API"""
             add_discord_stream_time_log(new_user, status=False)
