@@ -298,6 +298,10 @@ async def verify(ctx, user_name=None):
                 success_embed.set_author(name=f"{member}", icon_url=f"{member.avatar_url}")
                 success_embed.set_footer(text=f"{author}", icon_url=f"{author.avatar_url}")
                 await ctx.send(embed=success_embed)
+                """API"""
+                new_user = {"memberId": f"{member.id}"}
+                verified_by_member(new_user, str(author.id))
+
             await ctx.send('User already verified')
         else:
             await ctx.send('No permission to verify users')
