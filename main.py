@@ -1,12 +1,11 @@
 import discord
 from discord.ext import commands
 
-
 import datetime
 import os
 
 from esport_api import create_discord_user_api, add_discord_time_log, add_discord_stream_time_log, \
-    get_or_create_discord_server_settings, check_webhook_subscriptions, add_roles_to_server_settings
+    get_or_create_discord_server_settings, check_webhook_subscriptions, add_roles_to_server_settings, verified_by_member
 from models import DiscordUser, OnlineTimeLog, OnlineStreamTimeLog, UserVerifiedLog
 from apex_api import get_apex_rank
 
@@ -14,7 +13,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 TOKEN = os.getenv("DISCORD_BOT_TOKEN")
-
 
 intents = discord.Intents.default()
 intents.members = True
@@ -37,6 +35,7 @@ check_webhook_subscriptions()
 
 @client.event
 async def on_ready():
+    print('ready-v0.04.2')
     # Get or create all current guilds the bot belongs to
     guild_settings_dict.update(get_or_create_discord_server_settings(client.guilds))
 
@@ -68,9 +67,15 @@ VERIFICATION_CHANNEL_ID = [709285744794927125, 819347673575456769]  # Discord TP
 @client.event
 async def on_member_join(member):
     if member.guild.id == GUILD:
+        new_user = {"memberName": f"{member}",
+                    "memberId": f"{member.id}",
+                    "avatarUrl": f"{member.avatar_url}"
+                    }
         guild = client.get_guild(GUILD)
         channel = guild.get_channel(SERVER_LOG)
         verify_channel = guild.get_channel(709285744794927125)
+        """ADD user to API DB"""
+        create_discord_user_api(new_user)
 
         join_to_server_embed = discord.Embed(colour=discord.Colour(0x89ff00),
                                              timestamp=datetime.datetime.now(tzinfo),
@@ -85,6 +90,7 @@ async def on_member_join(member):
         verify_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
         msg = await verify_channel.send(embed=verify_embed)
         await msg.add_reaction("✅")
+
 
 
 """Server role manager"""
@@ -133,6 +139,10 @@ async def on_raw_reaction_add(payload):
                 success_embed.set_footer(text=f"{member}", icon_url=f"{member.avatar_url}")
                 await channel.send(embed=success_embed)
                 role_add_log = UserVerifiedLog(member_id=new_user_id, admin_id=member.id)
+
+                """API"""
+                new_user = {"memberId": f"{new_user.id}"}
+                verified_by_member(new_user, str(member.id))
 
 
 @client.command()
@@ -276,6 +286,7 @@ async def verify(ctx, user_name=None):
         author = ctx.message.author
         user_roles_list = [role.id for role in author.roles]
         intersection_roles = set(user_roles_list) & set(ROLE_ALLOWED_TO_VERIFY_ID)
+        member = None
         if len(intersection_roles) > 0:
             try:
                 member = discord.utils.get(client.get_all_members(), name=user_name.split("#")[0],
@@ -286,21 +297,46 @@ async def verify(ctx, user_name=None):
                 role = discord.utils.get(member.guild.roles, id=VERIFY_ROLE_ID)
                 await member.add_roles(role)
                 success_embed = discord.Embed(colour=discord.Colour(0x8aff02),
-                                              description=f"\n✅ User verified. {member.mention}",
+                                              description=f"\n✅ User verified! {member.mention}",
                                               timestamp=datetime.datetime.now(tzinfo))
                 success_embed.set_author(name=f"{member}", icon_url=f"{member.avatar_url}")
                 success_embed.set_footer(text=f"{author}", icon_url=f"{author.avatar_url}")
                 await ctx.send(embed=success_embed)
-            await ctx.send('User already verified')
-
+                """API"""
+                new_user = {"memberId": f"{member.id}"}
+                verified_by_member(new_user, str(author.id))
+            else:
+                await ctx.send('User already verified')
         else:
             await ctx.send('No permission to verify users')
 
 
 @client.command()
-async def test(ctx):
-    profile = await ctx.author.profile()
-    await ctx.send(profile)
+async def edit_nick(ctx):
+    if ctx.author.id == 339287982320254976:
+        i = 0
+        role_id_list = []
+        for member in ctx.guild.members:
+
+            for role in member.roles:
+                role_id_list.append(role.id)
+            if 818901497244024842 in role_id_list:
+                i += 1
+                if member.nick is None:
+                    nick_name = str(member.name).replace("]TPG[", "")
+                else:
+                    nick_name = str(member.nick).replace("]TPG[", "").replace("NS_", "")
+
+                print(f"{member} - {member.nick}")
+                try:
+                    await member.edit(nick=f"NS_{nick_name}")
+                    print(f"{member} - {member.nick}---{nick_name}")
+                    print(role_id_list)
+                    role_id_list = []
+                except:
+                    print(f"can't change {member}")
+                    role_id_list = []
+        print(i)
 
 
 if __name__ == '__main__':
