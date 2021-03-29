@@ -301,8 +301,8 @@ async def verify(ctx, user_name=None):
                 """API"""
                 new_user = {"memberId": f"{member.id}"}
                 verified_by_member(new_user, str(author.id))
-
-            await ctx.send('User already verified')
+            else:
+                await ctx.send('User already verified')
         else:
             await ctx.send('No permission to verify users')
 
