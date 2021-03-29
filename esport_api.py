@@ -175,7 +175,7 @@ def create_discord_user_api(new_user):
     header = {"Authorization": f"{access_token.get_token()}"}
     user_status = get_user_api_id_by_discord_id(new_user)
     if not user_status:
-        resp = requests.post(f'{API_BASE_URL}DiscordUser', headers=header, json=new_user)
+        resp = requests.post(f'{API_BASE_URL}/api/model/DiscordUser', headers=header, json=new_user)
         if resp.status_code == 200:
             print(f"New user was create {new_user}.")
         else:
@@ -193,7 +193,7 @@ def add_discord_time_log(user, status):
         "status": status,
     }
     if user_api_id is not None:
-        resp = requests.post(f'{API_BASE_URL}DiscordOnlineTimeLog', headers=header, json=new_user_time_log)
+        resp = requests.post(f'{API_BASE_URL}/api/model/DiscordOnlineTimeLog', headers=header, json=new_user_time_log)
         print(f"DiscordOnlineTimeLog {resp.status_code} {resp.json()}.")
     else:
         print(f"Time log was not added - {user} - is None")
@@ -208,7 +208,7 @@ def add_discord_stream_time_log(user, status):
         "status": status,
     }
     if user_api_id is not None:
-        resp = requests.post(f'{API_BASE_URL}DiscordOnlineStreamTimeLog', headers=header, json=new_user_time_log)
+        resp = requests.post(f'{API_BASE_URL}/api/model/DiscordOnlineStreamTimeLog', headers=header, json=new_user_time_log)
         print(f"DiscordOnlineStreamTimeLog {resp.status_code} {resp.json()}.")
     else:
         print(f"Stream log was not added - {user} - is None")
@@ -224,7 +224,7 @@ def get_user_api_id_by_discord_id(user):
                       json.dumps({"memberId": f"{user['memberId']}"})
                   }
         try:
-            check_user = requests.get(f'{API_BASE_URL}DiscordUser', headers=header, params=params)
+            check_user = requests.get(f'{API_BASE_URL}/api/model/DiscordUser', headers=header, params=params)
             if len(check_user.json()["data"]) > 0:
                 user_id = check_user.json()["data"][0]["id"]
                 print(f"User found discord id - {user['memberId']}, api_id - {user_id}")
@@ -241,5 +241,5 @@ def verified_by_member(new_user_id, admin_user_id):
     header = {"Authorization": f"{access_token.get_token()}"}
     new_user_api_id = get_user_api_id_by_discord_id(new_user_id)
     user_verified_by = {"verifiedByMemberId": f"{admin_user_id}"}
-    resp = requests.put(f'{API_BASE_URL}DiscordUser/{new_user_api_id}', headers=header, json=user_verified_by)
+    resp = requests.put(f'{API_BASE_URL}/api/model/DiscordUser/{new_user_api_id}', headers=header, json=user_verified_by)
     print(resp)
