@@ -35,7 +35,7 @@ check_webhook_subscriptions()
 
 @client.event
 async def on_ready():
-    print('ready-v0.04.2')
+    print('ready-v0.04.3')
     # Get or create all current guilds the bot belongs to
     guild_settings_dict.update(get_or_create_discord_server_settings(client.guilds))
 

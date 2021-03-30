@@ -6,3 +6,6 @@ venv/
 /venv/
 .env
 env/
+
+node_modules/
+
