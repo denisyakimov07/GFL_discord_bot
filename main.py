@@ -3,6 +3,8 @@ from discord.ext import commands
 
 import datetime
 
+from discord_embeds import embeds_for_verify_user, join_embed, left_embed, switch_embed_embed, start_stream_embed, \
+    stop_stream_embed, on_member_join_to_server_embed, new_user_to_verify_embed, left_server_embed
 from environment import get_env
 from esport_api import create_discord_user_api, add_discord_time_log, add_discord_stream_time_log, \
     get_or_create_discord_server_settings, check_webhook_subscriptions, add_roles_to_server_settings, verified_by_member
@@ -50,11 +52,7 @@ async def on_member_remove(member):
     if member.guild.id == GUILD:
         guild = client.get_guild(GUILD)
         channel = guild.get_channel(SERVER_LOG)
-        left_server_embed = discord.Embed(colour=discord.Colour(0xff001f),
-                                          timestamp=datetime.datetime.now(tzinfo),
-                                          description=f"{member.mention} has left the server!")
-        left_server_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
-        await channel.send(embed=left_server_embed)
+        await channel.send(embed=left_server_embed(member))
 
 
 """Server verify"""
@@ -73,19 +71,8 @@ async def on_member_join(member):
         verify_channel = guild.get_channel(709285744794927125)
         """ADD user to API DB"""
         create_discord_user_api(new_user)
-
-        join_to_server_embed = discord.Embed(colour=discord.Colour(0x89ff00),
-                                             timestamp=datetime.datetime.now(tzinfo),
-                                             description=f"{member} has joined the server!")
-        join_to_server_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
-        await channel.send(embed=join_to_server_embed)
-
-        verify_embed = discord.Embed(colour=discord.Colour(0x89ff00),
-                                     title=member.id,
-                                     timestamp=datetime.datetime.now(tzinfo),
-                                     description=f"{member} has joined the server!")
-        verify_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
-        msg = await verify_channel.send(embed=verify_embed)
+        await channel.send(embed=on_member_join_to_server_embed(member))
+        msg = await verify_channel.send(embed=new_user_to_verify_embed(member))
         await msg.add_reaction("✅")
 
 
@@ -125,15 +112,9 @@ async def on_raw_reaction_add(payload):
                 role = discord.utils.get(member.guild.roles, id=VERIFY_ROLE_ID)
                 await new_user.add_roles(role)
                 await msg.delete()
-
                 channel_id = payload.channel_id
                 channel = client.get_channel(channel_id)
-                success_embed = discord.Embed(colour=discord.Colour(0x8aff02),
-                                              description=f"\n✅ User verified. {new_user.mention}",
-                                              timestamp=datetime.datetime.now(tzinfo))
-                success_embed.set_author(name=f"{new_user}", icon_url=f"{new_user.avatar_url}")
-                success_embed.set_footer(text=f"{member}", icon_url=f"{member.avatar_url}")
-                await channel.send(embed=success_embed)
+                await channel.send(embed=embeds_for_verify_user(new_user, member))
 
                 """API"""
                 new_user = {"memberId": f"{new_user.id}"}
@@ -169,50 +150,30 @@ async def on_voice_state_update(member, before, after):
 
         """auditlog-voice"""
         if not before.channel:
-            join_embed = discord.Embed(colour=discord.Colour(0xff2f),
-                                       timestamp=datetime.datetime.now(tzinfo),
-                                       description=f"{member} has arrived to {after.channel.name}!")
-            join_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
-            await voice_channel.send(embed=join_embed)
+            await voice_channel.send(embed=join_embed(member, after))
 
             """ADD user to API DB"""
             create_discord_user_api(new_user)
             add_discord_time_log(new_user, status=True)
 
         if before.channel and not after.channel:
-            left_embed = discord.Embed(colour=discord.Colour(0xff001f),
-                                       timestamp=datetime.datetime.now(tzinfo),
-                                       description=f"{member} User disconnect!")
-            left_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
-            await voice_channel.send(embed=left_embed)
+            await voice_channel.send(embed=left_embed(member))
 
             """API"""
             add_discord_time_log(new_user, status=False)
 
         if before.channel and after.channel and before.channel != after.channel:
-            switched_embed = discord.Embed(colour=discord.Colour(0xffea00),
-                                           timestamp=datetime.datetime.now(tzinfo),
-                                           description=f"{member} User switched channel to {after.channel.name}!")
-            switched_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
-            await voice_channel.send(embed=switched_embed)
+            await voice_channel.send(embed=switch_embed_embed(member, after))
 
             """auditlog-event"""
         if not before.self_stream and after.self_stream:
-            switched_embed = discord.Embed(colour=discord.Colour(0xff2f),
-                                           timestamp=datetime.datetime.now(tzinfo),
-                                           description=f"{member} | start stream in {after.channel.name}!")
-            switched_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
-            await stream_channel.send(embed=switched_embed)
+            await stream_channel.send(embed=start_stream_embed(member, after))
 
             """API"""
             add_discord_stream_time_log(new_user, status=True)
 
         if before.self_stream and not after.self_stream or not after.channel and after.self_stream:
-            switched_embed = discord.Embed(colour=discord.Colour(0xff001f),
-                                           timestamp=datetime.datetime.now(tzinfo),
-                                           description=f"{member} | stop stream in {before.channel.name}!")
-            switched_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
-            await stream_channel.send(embed=switched_embed)
+            await stream_channel.send(embed=stop_stream_embed(member, before))
 
             """API"""
             add_discord_stream_time_log(new_user, status=False)
@@ -223,8 +184,8 @@ async def rank(ctx, user_name=None):
     if str(ctx.channel.id) in BOT_COMAND_channels_ID:
 
         # Check status of user rank, -1 if name wasn't found
-        rank = get_apex_rank(user_name)  # return str role name
-        if rank == -1:
+        apex_rank = get_apex_rank(user_name)  # return str role name
+        if apex_rank == -1:
             await ctx.send("Wrong name dude, you have to type your Origin name or tracker.gg is broken.")
         else:
             member = ctx.message.author
@@ -234,14 +195,14 @@ async def rank(ctx, user_name=None):
                     role = discord.utils.get(member.guild.roles, name=str(i))
                     await member.remove_roles(role)
             # add new role
-            role = discord.utils.get(member.guild.roles, name=rank)
+            role = discord.utils.get(member.guild.roles, name=apex_rank)
             await member.add_roles(role)
             # sent image of your rank
-            image_url = f"https://trackercdn.com/cdn/apex.tracker.gg/ranks/{rank.replace(' ', '').lower()}.png"
+            image_url = f"https://trackercdn.com/cdn/apex.tracker.gg/ranks/{apex_rank.replace(' ', '').lower()}.png"
             user_stat_url = f"https://apex.tracker.gg/apex/profile/origin/{user_name}/overview"
             embed = discord.Embed()
             embed.set_image(url=image_url)
-            embed = discord.Embed(title=f"Get rank {rank}.",
+            embed = discord.Embed(title=f"Get rank {apex_rank}.",
                                   colour=discord.Colour(0x50feb2), url=user_stat_url,
                                   timestamp=datetime.datetime.now(tzinfo))
             embed.set_thumbnail(url=image_url)
@@ -262,17 +223,14 @@ async def verify(ctx, user_name=None):
             try:
                 member = discord.utils.get(client.get_all_members(), name=user_name.split("#")[0],
                                            discriminator=user_name.split("#")[1])
-            except:
+            except Exception as ex:
+                print(ex)
                 await ctx.send("Can't fine User")
             if len(member.roles) == 1:
                 role = discord.utils.get(member.guild.roles, id=VERIFY_ROLE_ID)
                 await member.add_roles(role)
-                success_embed = discord.Embed(colour=discord.Colour(0x8aff02),
-                                              description=f"\n✅ User verified! {member.mention}",
-                                              timestamp=datetime.datetime.now(tzinfo))
-                success_embed.set_author(name=f"{member}", icon_url=f"{member.avatar_url}")
-                success_embed.set_footer(text=f"{author}", icon_url=f"{author.avatar_url}")
-                await ctx.send(embed=success_embed)
+                await ctx.send(embed=embeds_for_verify_user(member, author))
+
                 """API"""
                 new_user = {"memberId": f"{member.id}"}
                 verified_by_member(new_user, str(author.id))
@@ -304,8 +262,8 @@ async def edit_nick(ctx):
                     print(f"{member} - {member.nick}---{nick_name}")
                     print(role_id_list)
                     role_id_list = []
-                except:
-                    print(f"can't change {member}")
+                except Exception as ex:
+                    print(f"can't change {member} - {ex}")
                     role_id_list = []
         print(i)
 

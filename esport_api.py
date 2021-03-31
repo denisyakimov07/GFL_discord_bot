@@ -1,5 +1,3 @@
-
-
 import discord
 import requests
 
@@ -58,39 +56,43 @@ GET_NEW_TOKEN_URL = "oauth/token"
 DiscordUser = "DiscordUser"
 
 
-def get_user_status_by_id_from_api(new_user):
+def get_header():
     header = {"Authorization": f"{access_token.get_token()}"}
-    params = {"q":
-                  json.dumps({"memberId": f"{new_user['memberId']}"})
-              }
+    return header
+
+
+def get_user_status_by_id_from_api(new_user):
+    params = {"q": json.dumps({"memberId": f"{new_user['memberId']}"})}
+
     try:
-        check_user = requests.get(f'{get_env().API_BASE_URL}/api/model/DiscordUser', headers=header, params=params)
+        check_user = requests.get(f'{get_env().API_BASE_URL}/api/model/DiscordUser',
+                                  headers=get_header(),
+                                  params=params)
         if len(check_user.json()["data"]) == 0:
             print(f"User was no found {new_user}.")
             return False
         else:
             print(f"User was found {new_user}.")
             return True
-    except:
-        print(f"Cant check user")
+    except Exception as ex:
+        print(f"Cant check user {ex}")
 
 
 # Checks to see if a webhook subscription exists and creates it if it does not
 def check_webhook_subscriptions():
-    headers = {"Authorization": f"{access_token.get_token()}"}
     url = f'{get_env().API_BASE_URL}/api/model/WebhookSubscription'
     webhook_url = f'{get_env().API_BASE_URL}/discordserversettings/updateById'
     params = {'q': json.dumps({'client': get_env().API_CLIENT_ID, 'url': webhook_url})}
-    get_request = requests.get(url, headers=headers, params=params)
+    get_request = requests.get(url, headers=get_header(), params=params)
     response_body = get_request.json()
     if response_body['totalCount'] == 0:
         # Create webhook
         body = {'client': get_env().API_CLIENT_ID, 'url': webhook_url, 'modelOperations': ['updateById'],
                 'modelName': 'DiscordServerSettings'}
         try:
-            requests.post(url, json=body, headers=headers)
-        except:
-            print('Failed to create webhook')
+            requests.post(url, json=body, headers=get_header())
+        except Exception as ex:
+            print(f'Failed to create webhook {ex}')
 
 
 def get_or_create_discord_server_settings(guilds: list) -> dict:
@@ -139,14 +141,12 @@ def get_or_create_discord_server_settings(guilds: list) -> dict:
 
 
 def add_roles_to_server_settings(guilds: List[discord.Guild], server_models_dict: dict):
-    headers = {"Authorization": f"{access_token.get_token()}"}
-
     create_many_body = []
 
     for guild in guilds:
         server_settings = server_models_dict[str(guild.id)]
 
-        roles_dict = {}
+        # roles_dict = {}
 
         for role in guild.roles:
             roles_in_api = server_settings['roles'] or []
@@ -160,7 +160,7 @@ def add_roles_to_server_settings(guilds: List[discord.Guild], server_models_dict
 
     if len(create_many_body) > 0:
         url = f'{get_env().API_BASE_URL}/api/model/DiscordRole'
-        put_response = requests.post(url, headers=headers, json=create_many_body)
+        put_response = requests.post(url, headers=get_header(), json=create_many_body)
         if put_response.status_code != 200:
             print(f'Failed to create DiscordRole role\'s: {put_response.json()}')
         else:
@@ -168,10 +168,9 @@ def add_roles_to_server_settings(guilds: List[discord.Guild], server_models_dict
 
 
 def create_discord_user_api(new_user):
-    header = {"Authorization": f"{access_token.get_token()}"}
     user_status = get_user_api_id_by_discord_id(new_user)
     if not user_status:
-        resp = requests.post(f'{get_env().API_BASE_URL}/api/model/DiscordUser', headers=header, json=new_user)
+        resp = requests.post(f'{get_env().API_BASE_URL}/api/model/DiscordUser', headers=get_header(), json=new_user)
         if resp.status_code == 200:
             print(f"New user was create {new_user}.")
         else:
@@ -180,32 +179,29 @@ def create_discord_user_api(new_user):
         print(f"User already exist {new_user}")
 
 
-def add_discord_time_log(user, status):
-    header = {"Authorization": f"{access_token.get_token()}"}
-    user_api_id = get_user_api_id_by_discord_id(user)
-    new_user_time_log = {
-        "discordUser": f"{user_api_id}",
+def new_user_time_log(user, status):
+    time_log = {
+        "discordUser": f"{get_user_api_id_by_discord_id(user)}",
         "memberId": f"{user['memberId']}",
         "status": status,
     }
-    if user_api_id is not None:
-        resp = requests.post(f'{get_env().API_BASE_URL}/api/model/DiscordOnlineTimeLog', headers=header, json=new_user_time_log)
+    return time_log
+
+
+def add_discord_time_log(user, status):
+    if get_user_api_id_by_discord_id(user) is not None:
+        resp = requests.post(f'{get_env().API_BASE_URL}/api/model/DiscordOnlineTimeLog',
+                             headers=get_header(),
+                             json=new_user_time_log(user, status))
         print(f"DiscordOnlineTimeLog {resp.status_code} {resp.json()}.")
     else:
         print(f"Time log was not added - {user} - is None")
 
 
 def add_discord_stream_time_log(user, status):
-    header = {"Authorization": f"{access_token.get_token()}"}
-    user_api_id = get_user_api_id_by_discord_id(user)
-    new_user_time_log = {
-        "discordUser": f"{user_api_id}",
-        "memberId": f"{user['memberId']}",
-        "status": status,
-    }
-    if user_api_id is not None:
-        resp = requests.post(f'{get_env().API_BASE_URL}/api/model/DiscordOnlineStreamTimeLog', headers=header,
-                             json=new_user_time_log)
+    if get_user_api_id_by_discord_id(user) is not None:
+        resp = requests.post(f'{get_env().API_BASE_URL}/api/model/DiscordOnlineStreamTimeLog', headers=get_header(),
+                             json=new_user_time_log(user, status))
         print(f"DiscordOnlineStreamTimeLog {resp.status_code} {resp.json()}.")
     else:
         print(f"Stream log was not added - {user} - is None")
@@ -217,12 +213,11 @@ def get_user_api_id_by_discord_id(user):
             f"User_api_id get from cache {user['memberId']} = {cached_get_user_api_id_by_discord_id[user['memberId']]}")
         return cached_get_user_api_id_by_discord_id[user['memberId']]
     else:
-        header = {"Authorization": f"{access_token.get_token()}"}
-        params = {"q":
-                      json.dumps({"memberId": f"{user['memberId']}"})
-                  }
+        params = {"q": json.dumps({"memberId": f"{user['memberId']}"})}
         try:
-            check_user = requests.get(f'{get_env().API_BASE_URL}/api/model/DiscordUser', headers=header, params=params)
+            check_user = requests.get(f'{get_env().API_BASE_URL}/api/model/DiscordUser',
+                                      headers=get_header(),
+                                      params=params)
             if len(check_user.json()["data"]) > 0:
                 user_id = check_user.json()["data"][0]["id"]
                 print(f"User found discord id - {user['memberId']}, api_id - {user_id}")
@@ -236,9 +231,8 @@ def get_user_api_id_by_discord_id(user):
 
 
 def verified_by_member(new_user_id, admin_user_id):
-    header = {"Authorization": f"{access_token.get_token()}"}
-    new_user_api_id = get_user_api_id_by_discord_id(new_user_id)
     user_verified_by = {"verifiedByMemberId": f"{admin_user_id}"}
-    resp = requests.put(f'{get_env().API_BASE_URL}/api/model/DiscordUser/{new_user_api_id}', headers=header,
+    resp = requests.put(f'{get_env().API_BASE_URL}/api/model/DiscordUser/{get_user_api_id_by_discord_id(new_user_id)}',
+                        headers=get_header(),
                         json=user_verified_by)
     print(resp)
