@@ -43,8 +43,8 @@ class DiscordRole(BaseModel):
 class DiscordServerSettings(BaseModel):
     guild_id: str = Field(alias='guildId')
     name: str
-    verification_roles: List[str] = Field(alias='verificationRoles')
-    roles: List[DiscordRole]
+    verification_roles: Union[List['DiscordVerificationRole'], List[str]] = Field(alias='verificationRoles')
+    roles: Union[List[str], List[DiscordRole]]
     bot_command_channel_id: str = Field(alias='botCommandChannelId')
 
 
