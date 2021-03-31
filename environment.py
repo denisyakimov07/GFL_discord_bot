@@ -9,11 +9,12 @@ class _Environment:
     DISCORD_CLIENT_ID: str
     DISCORD_CLIENT_SECRET: str
     DISCORD_PUBLIC_KEY: str
+    DISCORD_BASE_URL: str
     API_CLIENT_ID: str
     API_CLIENT_SECRET: str
     PORT: int
     API_BASE_URL: str
-    DISCORD_BASE_URL: str
+
 
     def __init__(self):
         self.DISCORD_BOT_TOKEN = os.getenv('DISCORD_BOT_TOKEN')
