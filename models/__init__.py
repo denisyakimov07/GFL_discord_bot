@@ -1,8 +1,10 @@
+import json
 from datetime import datetime
 from enum import Enum
 from typing import Optional, Union, List, TypeVar, Generic, Any
 
 from pydantic import BaseModel as BaseModelPydantic, Field
+from pydantic.generics import GenericModel
 
 
 class BaseModel(BaseModelPydantic):
@@ -75,7 +77,7 @@ class DiscordVerificationRole(BaseModel):
 TModel = TypeVar('TModel')
 
 
-class Pagination(BaseModelPydantic, Generic[TModel]):
+class Pagination(GenericModel, Generic[TModel]):
     total_count: int = Field(alias='totalCount')
     total_pages: int = Field(alias='totalPages')
     results_per_page: int = Field(alias='resultsPerPage')
@@ -104,4 +106,4 @@ class WebhookSubscription(BaseModel):
     client: Union[Client, str]
     authorization_header: Optional[str] = Field(alias='authorizationHeader')
     model_operations: List[str] = Field(alias='modelOperations')
-    model_name: List[ModelOperationEnum] = Field(alias='modelName')
+    model_name: str = Field(alias='modelName')
