@@ -1,7 +1,7 @@
 from flask import Flask, request
 from waitress import serve
 
-from environment import getEnv
+from environment import get_env
 import threading
 
 app = Flask(__name__)
@@ -15,8 +15,8 @@ def discord_server_settings_update_by_id_webhook(guild_id: str):
 
 
 def start_server():
-    print(f'Listening on port {getEnv().PORT}')
-    serve(app, host='0.0.0.0', port=getEnv().PORT)
+    print(f'Listening on port {get_env().PORT}')
+    serve(app, host='0.0.0.0', port=get_env().PORT)
 
 
 api_server_thread = threading.Thread(target=start_server, args=())

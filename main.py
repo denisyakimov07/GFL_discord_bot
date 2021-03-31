@@ -2,17 +2,11 @@ import discord
 from discord.ext import commands
 
 import datetime
-import os
 
+from environment import get_env
 from esport_api import create_discord_user_api, add_discord_time_log, add_discord_stream_time_log, \
     get_or_create_discord_server_settings, check_webhook_subscriptions, add_roles_to_server_settings, verified_by_member
-from models import DiscordUser, OnlineTimeLog, OnlineStreamTimeLog, UserVerifiedLog
 from apex_api import get_apex_rank
-
-from dotenv import load_dotenv
-load_dotenv()
-
-TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 
 intents = discord.Intents.default()
 intents.members = True
@@ -33,17 +27,20 @@ guild_settings_dict: dict = {}
 # Create webhooks if they don't exist
 check_webhook_subscriptions()
 
+
 @client.event
 async def on_ready():
     print('ready-v0.04.3')
     # Get or create all current guilds the bot belongs to
     guild_settings_dict.update(get_or_create_discord_server_settings(client.guilds))
 
+
 @client.event
 async def on_guild_join(guild: discord.Guild):
     # Get or create DiscordServerSettings if the guild has not been added before
     guild_settings_dict.update(get_or_create_discord_server_settings([guild]))
     add_roles_to_server_settings([guild], guild_settings_dict)
+
 
 """auditlog-join-log"""
 
@@ -92,7 +89,6 @@ async def on_member_join(member):
         await msg.add_reaction("✅")
 
 
-
 """Server role manager"""
 
 # Verification new users
@@ -138,7 +134,6 @@ async def on_raw_reaction_add(payload):
                 success_embed.set_author(name=f"{new_user}", icon_url=f"{new_user.avatar_url}")
                 success_embed.set_footer(text=f"{member}", icon_url=f"{member.avatar_url}")
                 await channel.send(embed=success_embed)
-                role_add_log = UserVerifiedLog(member_id=new_user_id, admin_id=member.id)
 
                 """API"""
                 new_user = {"memberId": f"{new_user.id}"}
@@ -180,20 +175,8 @@ async def on_voice_state_update(member, before, after):
             join_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
             await voice_channel.send(embed=join_embed)
 
-            """ADD user to DB"""
-            check_user = DiscordUser(member_name=str(member),
-                                     member_id=str(member.id),
-                                     member_nickname=str(member.nick),
-                                     avatar_url=member.avatar_url)
-
-
             """ADD user to API DB"""
             create_discord_user_api(new_user)
-
-            """ADD time record DB"""
-
-            time_log = OnlineTimeLog(member_id=member.id, status=True)
-            """API"""
             add_discord_time_log(new_user, status=True)
 
         if before.channel and not after.channel:
@@ -202,10 +185,6 @@ async def on_voice_state_update(member, before, after):
                                        description=f"{member} User disconnect!")
             left_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
             await voice_channel.send(embed=left_embed)
-
-            """ADD time record DB"""
-
-            time_log = OnlineTimeLog(member_id=member.id, status=False)
 
             """API"""
             add_discord_time_log(new_user, status=False)
@@ -225,10 +204,6 @@ async def on_voice_state_update(member, before, after):
             switched_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
             await stream_channel.send(embed=switched_embed)
 
-            """ADD stream time record DB"""
-
-            time_log = OnlineStreamTimeLog(member_id=member.id, status=True)
-
             """API"""
             add_discord_stream_time_log(new_user, status=True)
 
@@ -238,10 +213,6 @@ async def on_voice_state_update(member, before, after):
                                            description=f"{member} | stop stream in {before.channel.name}!")
             switched_embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
             await stream_channel.send(embed=switched_embed)
-
-            """ADD stream time record DB"""
-
-            time_log = OnlineStreamTimeLog(member_id=member.id, status=False)
 
             """API"""
             add_discord_stream_time_log(new_user, status=False)
@@ -340,4 +311,4 @@ async def edit_nick(ctx):
 
 
 if __name__ == '__main__':
-    client.run(TOKEN)
+    client.run(get_env().DISCORD_BOT_TOKEN)
