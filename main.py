@@ -246,7 +246,6 @@ async def edit_nick(ctx):
         i = 0
         role_id_list = []
         for member in ctx.guild.members:
-
             for role in member.roles:
                 role_id_list.append(role.id)
             if 818901497244024842 in role_id_list:
