@@ -1,3 +1,5 @@
+from typing import Dict
+
 import discord
 from discord.ext import commands
 
@@ -9,6 +11,7 @@ from environment import get_env
 from esport_api import create_discord_user_api, add_discord_time_log, add_discord_stream_time_log, \
     get_or_create_discord_server_settings, check_webhook_subscriptions, add_roles_to_server_settings, verified_by_member
 from apex_api import get_apex_rank
+from models import DiscordServerSettings
 
 intents = discord.Intents.default()
 intents.members = True
@@ -24,7 +27,7 @@ BOT_COMAND_channels_ID = ["788693067757781023", "816203477801762836"]
 timezone_offset = 8.0  # Pacific Standard Time (UTC−08:00)
 tzinfo = datetime.timezone(datetime.timedelta(hours=timezone_offset))
 
-guild_settings_dict: dict = {}
+guild_settings_dict: Dict[str, DiscordServerSettings] = {}
 
 # Create webhooks if they don't exist
 check_webhook_subscriptions()
@@ -232,7 +235,7 @@ async def verify(ctx, user_name=None):
                 await ctx.send(embed=embeds_for_verify_user(member, author))
 
                 """API"""
-                new_user = {"memberId": f"{member.id}"}
+                new_user = member.id
                 verified_by_member(new_user, str(author.id))
             else:
                 await ctx.send('User already verified')

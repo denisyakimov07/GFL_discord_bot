@@ -45,7 +45,7 @@ class DiscordServerSettings(BaseModel):
     name: str
     verification_roles: Union[List['DiscordVerificationRole'], List[str]] = Field(alias='verificationRoles')
     roles: Union[List[str], List[DiscordRole]]
-    bot_command_channel_id: str = Field(alias='botCommandChannelId')
+    bot_command_channel_id: Optional[str] = Field(alias='botCommandChannelId')
 
 
 class DiscordUser(BaseModel):
@@ -74,16 +74,6 @@ class DiscordVerificationRole(BaseModel):
     max_per_day: int = Field(alias='maxPerDay')
 
 
-TModel = TypeVar('TModel')
-
-
-class Pagination(GenericModel, Generic[TModel]):
-    total_count: int = Field(alias='totalCount')
-    total_pages: int = Field(alias='totalPages')
-    results_per_page: int = Field(alias='resultsPerPage')
-    data: List[TModel]
-
-
 class User(BaseModel):
     username: Optional[str]
     email: str
@@ -109,7 +99,16 @@ class WebhookSubscription(BaseModel):
     model_name: str = Field(alias='modelName')
 
 
+TModel = TypeVar('TModel')
+
+
+class Pagination(GenericModel, Generic[TModel]):
+    total_count: int = Field(alias='totalCount')
+    total_pages: int = Field(alias='totalPages')
+    results_per_page: int = Field(alias='resultsPerPage')
+    data: List[TModel]
+
+
 DiscordServerSettings.update_forward_refs()
 DiscordUserNote.update_forward_refs()
 DiscordUser.update_forward_refs()
-Pagination.update_forward_refs()
