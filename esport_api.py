@@ -1,3 +1,5 @@
+import datetime
+
 import discord
 import requests
 
@@ -7,6 +9,7 @@ import time
 from typing import List
 
 from environment import get_env
+from models import Pagination, DiscordUser
 
 cached_get_user_api_id_by_discord_id = {}
 
@@ -236,3 +239,21 @@ def verified_by_member(new_user_id, admin_user_id):
                         headers=get_header(),
                         json=user_verified_by)
     print(resp)
+
+
+def get_total_verifications_in_last_24_hours(user_discord_id):
+    right_now = datetime.datetime.utcnow()
+    a_day_ago = right_now - datetime.timedelta(hours=24)
+    params = {"q": json.dumps({f"{'verifiedByMemberId'}": f"{user_discord_id}",
+                               f"{'updatedAt'}": {'$gte': f'{a_day_ago.strftime("%Y-%m-%dT%H:%M:%S.%fZ")}'}})}
+    count = requests.get(f'{get_env().API_BASE_URL}/api/model/DiscordUser',
+                         headers=get_header(),
+                         params=params)
+    print(count.json())
+    pagination: Pagination[DiscordUser] = Pagination[DiscordUser].parse_raw(count.text)
+    print(pagination)
+    return pagination
+
+
+test = get_total_verifications_in_last_24_hours("318827564615598080")
+print(test)
