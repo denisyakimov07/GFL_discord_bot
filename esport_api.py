@@ -58,7 +58,6 @@ class AccessToken:
 access_token = AccessToken()
 
 GET_NEW_TOKEN_URL = "oauth/token"
-DiscordUser = "DiscordUser"
 
 
 def get_header():
@@ -185,78 +184,75 @@ def create_discord_user_api(new_user):
         print(f"User already exist {new_user}")
 
 
-def new_user_time_log(user, status):
+def new_user_time_log(user_time_log, status):
     time_log = {
-        "discordUser": f"{get_user_api_id_by_discord_id(user)}",
-        "memberId": f"{user['memberId']}",
+        "discordUser": f"{get_user_api_id_by_discord_id(user_time_log)}",
+        "memberId": f"{user_time_log['memberId']}",
         "status": status,
     }
     return time_log
 
 
-def add_discord_time_log(user, status):
-    if get_user_api_id_by_discord_id(user) is not None:
+def add_discord_time_log(user_add_time_log, status):
+    if get_user_api_id_by_discord_id(user_add_time_log) is not None:
         resp = requests.post(f'{get_env().API_BASE_URL}/api/model/DiscordOnlineTimeLog',
                              headers=get_header(),
-                             json=new_user_time_log(user, status))
+                             json=new_user_time_log(user_add_time_log, status))
         print(f"DiscordOnlineTimeLog {resp.status_code} {resp.json()}.")
     else:
-        print(f"Time log was not added - {user} - is None")
+        print(f"Time log was not added - {user_add_time_log} - is None")
 
 
-def add_discord_stream_time_log(user, status):
-    if get_user_api_id_by_discord_id(user) is not None:
+def add_discord_stream_time_log(user_stream_log, status):
+    if get_user_api_id_by_discord_id(user_stream_log) is not None:
         resp = requests.post(f'{get_env().API_BASE_URL}/api/model/DiscordOnlineStreamTimeLog', headers=get_header(),
-                             json=new_user_time_log(user, status))
+                             json=new_user_time_log(user_stream_log, status))
         print(f"DiscordOnlineStreamTimeLog {resp.status_code} {resp.json()}.")
     else:
-        print(f"Stream log was not added - {user} - is None")
+        print(f"Stream log was not added - {user_stream_log} - is None")
 
 
-def get_user_api_id_by_discord_id(user):
-    if str(user['memberId']) in cached_get_user_api_id_by_discord_id:
+def get_user_api_id_by_discord_id(user_discord):
+    if str(user_discord['memberId']) in cached_get_user_api_id_by_discord_id:
         print(
-            f"User_api_id get from cache {user['memberId']} = {cached_get_user_api_id_by_discord_id[user['memberId']]}")
-        return cached_get_user_api_id_by_discord_id[user['memberId']]
+            f"User_api_id get from cache {user_discord['memberId']} = {cached_get_user_api_id_by_discord_id[user_discord['memberId']]}")
+        return cached_get_user_api_id_by_discord_id[user_discord['memberId']]
     else:
-        params = {"q": json.dumps({"memberId": f"{user['memberId']}"})}
+        params = {"q": json.dumps({"memberId": f"{user_discord['memberId']}"})}
         try:
             check_user = requests.get(f'{get_env().API_BASE_URL}/api/model/DiscordUser',
                                       headers=get_header(),
                                       params=params)
             if len(check_user.json()["data"]) > 0:
                 user_id = check_user.json()["data"][0]["id"]
-                print(f"User found discord id - {user['memberId']}, api_id - {user_id}")
-                cached_get_user_api_id_by_discord_id[str(user['memberId'])] = str(user_id)
+                print(f"User found discord id - {user_discord['memberId']}, api_id - {user_id}")
+                cached_get_user_api_id_by_discord_id[str(user_discord['memberId'])] = str(user_id)
                 return user_id
             else:
-                print(f"User is not found discord id - {user['memberId']}")
+                print(f"User is not found discord id - {user_discord['memberId']}")
         except Exception as ex:
-            print(f"Bad request, discord id - {user['memberId']}, Exception {ex}.")
+            print(f"Bad request, discord id - {user_discord['memberId']}, Exception {ex}.")
             return
 
 
 def verified_by_member(new_user_id, admin_user_id):
-    user_verified_by = {"verifiedByMemberId": f"{admin_user_id}"}
-    resp = requests.put(f'{get_env().API_BASE_URL}/api/model/DiscordUser/{get_user_api_id_by_discord_id(new_user_id)}',
+    new_user = {'memberId': new_user_id}
+    admin_user = {'memberId': admin_user_id}
+    user_verified_by = {"verifiedBy": f"{get_user_api_id_by_discord_id(admin_user)}"}
+    resp = requests.put(f'{get_env().API_BASE_URL}/api/model/DiscordUser/{get_user_api_id_by_discord_id(new_user)}',
                         headers=get_header(),
                         json=user_verified_by)
-    print(resp)
+    print(f"User get verified {new_user_id} by {admin_user_id}---{resp}")
 
 
 def get_total_verifications_in_last_24_hours(user_discord_id):
+    member = {'memberId': user_discord_id}
     right_now = datetime.datetime.utcnow()
     a_day_ago = right_now - datetime.timedelta(hours=24)
-    params = {"q": json.dumps({f"{'verifiedByMemberId'}": f"{user_discord_id}",
-                               f"{'updatedAt'}": {'$gte': f'{a_day_ago.strftime("%Y-%m-%dT%H:%M:%S.%fZ")}'}})}
+    params = {"q": json.dumps({f"{'verifiedBy'}": f"{get_user_api_id_by_discord_id(member)}",
+                               f"{'updatedAt'}": {'$gte': f'{a_day_ago.isoformat()}'}})}
     count = requests.get(f'{get_env().API_BASE_URL}/api/model/DiscordUser',
                          headers=get_header(),
                          params=params)
-    print(count.json())
     pagination: Pagination[DiscordUser] = Pagination[DiscordUser].parse_raw(count.text)
-    print(pagination)
-    return pagination
-
-
-test = get_total_verifications_in_last_24_hours("318827564615598080")
-print(test)
+    return pagination.total_count

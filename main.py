@@ -235,7 +235,7 @@ async def verify(ctx, user_name=None):
                 await ctx.send(embed=embeds_for_verify_user(member, author))
 
                 """API"""
-                new_user = {"memberId": f"{member.id}"}
+                new_user = member.id
                 verified_by_member(new_user, str(author.id))
             else:
                 await ctx.send('User already verified')
