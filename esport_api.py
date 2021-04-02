@@ -4,9 +4,12 @@ import requests
 import json
 import time
 
-from typing import List
+from typing import List, Dict
+
+from pydantic.tools import parse_obj_as
 
 from environment import get_env
+from models import DiscordServerSettings, Pagination, DiscordRole
 
 cached_get_user_api_id_by_discord_id = {}
 
@@ -95,8 +98,8 @@ def check_webhook_subscriptions():
             print(f'Failed to create webhook {ex}')
 
 
-def get_or_create_discord_server_settings(guilds: list) -> dict:
-    server_models_dict = {}
+def get_or_create_discord_server_settings(guilds: List[discord.Guild]) -> Dict[str, DiscordServerSettings]:
+    server_models_dict: Dict[str, DiscordServerSettings] = {}
 
     guild_ids = list(map(lambda x: str(x.id), guilds))
     params = {
@@ -108,13 +111,13 @@ def get_or_create_discord_server_settings(guilds: list) -> dict:
 
     url = f'{get_env().API_BASE_URL}/api/model/DiscordServerSettings'
     get_request = requests.get(url, headers=headers, params=params)
-    body = get_request.json()
+    pagination: Pagination[DiscordServerSettings] = Pagination[DiscordServerSettings].parse_raw(get_request.text)
 
     # Discord Server Settings that already exist
-    found_guild_ids: list = list(map(lambda x: x['guildId'], body['data']))
+    found_guild_ids: List[str] = list(map(lambda x: x.guild_id, pagination.data))
 
     # Body models to create in API
-    create_many_body: list = []
+    create_many_body: List = []
 
     for guild in guilds:
         guild_id_str = str(guild.id)
@@ -126,21 +129,22 @@ def get_or_create_discord_server_settings(guilds: list) -> dict:
                 'guildId': guild_id_str,
             })
         else:
-            discord_server_settings = [x for x in body['data'] if x['guildId'] == guild_id_str][0]
-            server_models_dict[discord_server_settings['guildId']] = discord_server_settings
+            discord_server_settings = [x for x in pagination.data if x.guild_id == guild_id_str][0]
+            server_models_dict[discord_server_settings.guild_id] = discord_server_settings
 
     if len(create_many_body) > 0:
         post_request = requests.post(url, json=create_many_body, headers=headers)
+        new_models: List[DiscordServerSettings] = parse_obj_as(List[DiscordServerSettings], post_request.text)
         body = post_request.json()
-        for guild_model in body:
-            server_models_dict[guild_model['guildId']] = guild_model
-            print(f'Added DiscordServerSettings for {guild_model["name"]}')
+        for guild_model in new_models:
+            server_models_dict[guild_model.guild_id] = guild_model
+            print(f'Added DiscordServerSettings for {guild_model.name}')
 
     add_roles_to_server_settings(guilds, server_models_dict)
     return server_models_dict
 
 
-def add_roles_to_server_settings(guilds: List[discord.Guild], server_models_dict: dict):
+def add_roles_to_server_settings(guilds: List[discord.Guild], server_models_dict: Dict[str, DiscordServerSettings]):
     create_many_body = []
 
     for guild in guilds:
@@ -149,11 +153,11 @@ def add_roles_to_server_settings(guilds: List[discord.Guild], server_models_dict
         # roles_dict = {}
 
         for role in guild.roles:
-            roles_in_api = server_settings['roles'] or []
-            existing_role = next(iter(filter(lambda x: x['roleId'] == str(role.id), roles_in_api)), None)
+            roles_in_api: List[DiscordRole] = server_settings.roles or []
+            existing_role = next(iter(filter(lambda x: x.role_id == str(role.id), roles_in_api)), None)
             if existing_role is None:
                 create_many_body.append({
-                    'guildId': server_settings['guildId'],
+                    'guildId': server_settings.guild_id,
                     'roleId': str(role.id),
                     'name': role.name
                 })
