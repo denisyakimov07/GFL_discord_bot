@@ -48,6 +48,16 @@ class DiscordServerSettings(BaseModel):
     bot_command_channel_id: Optional[str] = Field(alias='botCommandChannelId')
 
 
+TModel = TypeVar('TModel')
+
+
+class Pagination(GenericModel, Generic[TModel]):
+    total_count: int = Field(alias='totalCount')
+    total_pages: int = Field(alias='totalPages')
+    results_per_page: int = Field(alias='resultsPerPage')
+    data: List[TModel]
+
+
 class DiscordUser(BaseModel):
     id: str
     member_name: str = Field(alias='memberName')
@@ -99,18 +109,8 @@ class WebhookSubscription(BaseModel):
     model_name: str = Field(alias='modelName')
 
 
-TModel = TypeVar('TModel')
-
-
-class Pagination(GenericModel, Generic[TModel]):
-    total_count: int = Field(alias='totalCount')
-    total_pages: int = Field(alias='totalPages')
-    results_per_page: int = Field(alias='resultsPerPage')
-    data: List[TModel]
-
-
 
 DiscordServerSettings.update_forward_refs()
 DiscordUserNote.update_forward_refs()
 DiscordUser.update_forward_refs()
-Pagination.update_forward_refs()
+# Pagination.update_forward_refs()
