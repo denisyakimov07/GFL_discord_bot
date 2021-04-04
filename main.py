@@ -98,6 +98,19 @@ settings = {"ROLE_ALLOWED_TO_VERIFY_ID": [818901497244024842, 722195472411787455
             "VERIFY_ROLE_ID": 703686185968599111
             }
 
+roles_assignment_setup = {"massage_id": 828074955374854164,
+                          "emoji_to_role": {"Apex": 818814719854116914,
+                                            "WorldofWarcraft": 824845946684571719,
+                                            "CallofDuty": 824846357214396477,
+                                            "Fortnite": 824852084691566613,
+                                            "LeagueofLegends": 824846490350256199,
+                                            "Overwatch": 824845796196352033,
+                                            "Valorant": 824845603687104512,
+                                            "HuntShowdown": 824846176154943499,
+                                            "Minecraft": 818824441903185950,
+                                            "EscapeFromTarkov": 824846668406456351,
+                                            }}
+
 
 @client.event
 async def on_raw_reaction_add(payload):
@@ -123,6 +136,29 @@ async def on_raw_reaction_add(payload):
                 new_user = {"memberId": f"{new_user.id}"}
                 admin_member = {"memberId": f"{member.id}"}
                 verified_by_member(new_user, admin_member)
+
+    if payload.message_id == roles_assignment_setup['massage_id']:
+        try:
+            if payload.emoji.name in roles_assignment_setup["emoji_to_role"]:
+                member_add_role = payload.member
+                role = discord.utils.get(member_add_role.guild.roles,
+                                         id=roles_assignment_setup["emoji_to_role"][payload.emoji.name])
+                await member_add_role.add_roles(role)
+                print(f"Role was added {member_add_role} - {role}")
+        except Exception as ex:
+            print(f"Role was not added - {ex}")
+
+
+@client.event
+async def on_raw_reaction_remove(payload):
+    if payload.message_id == roles_assignment_setup['massage_id']:
+        if payload.emoji.name in roles_assignment_setup["emoji_to_role"]:
+            guild = client.get_guild(payload.guild_id)
+            member_remove_role = await guild.fetch_member(payload.user_id)
+            role = discord.utils.get(guild.roles,
+                                     id=roles_assignment_setup["emoji_to_role"][payload.emoji.name])
+            await member_remove_role.remove_roles(role)
+            print(f"Role was removed {member_remove_role} - {role}")
 
 
 @client.command()
