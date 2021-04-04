@@ -121,7 +121,8 @@ async def on_raw_reaction_add(payload):
 
                 """API"""
                 new_user = {"memberId": f"{new_user.id}"}
-                verified_by_member(new_user, str(member.id))
+                admin_member = {"memberId": f"{member.id}"}
+                verified_by_member(new_user, admin_member)
 
 
 @client.command()
@@ -235,8 +236,9 @@ async def verify(ctx, user_name=None):
                 await ctx.send(embed=embeds_for_verify_user(member, author))
 
                 """API"""
-                new_user = member.id
-                verified_by_member(new_user, str(author.id))
+                new_user = {"memberId": f"{member.id}"}
+                admin_member = {"memberId": f"{member.id}"}
+                verified_by_member(new_user, admin_member)
             else:
                 await ctx.send('User already verified')
         else:
