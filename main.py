@@ -316,7 +316,7 @@ async def on_member_update(before: discord.Member, after: discord.Member):
     if before.roles != after.roles:
         roles_before = [role.name for role in before.roles]
         roles_after = [role.name for role in after.roles]
-        if len(roles_before) > len(roles_after):
+        if len(roles_before) < len(roles_after):
             role = list(set(roles_before) ^ set(roles_after))[0]
             await role_log_channel.send(embed=user_add_role_embed(after, role))
         else:
