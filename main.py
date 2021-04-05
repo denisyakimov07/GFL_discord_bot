@@ -6,7 +6,8 @@ from discord.ext import commands
 import datetime
 
 from discord_embeds import embeds_for_verify_user, join_embed, left_embed, switch_embed_embed, start_stream_embed, \
-    stop_stream_embed, on_member_join_to_server_embed, new_user_to_verify_embed, left_server_embed
+    stop_stream_embed, on_member_join_to_server_embed, new_user_to_verify_embed, left_server_embed, user_add_role_embed, \
+    user_remove_role_embed
 from environment import get_env
 from esport_api import create_discord_user_api, add_discord_time_log, add_discord_stream_time_log, \
     get_or_create_discord_server_settings, check_webhook_subscriptions, add_roles_to_server_settings, verified_by_member
@@ -306,6 +307,21 @@ async def edit_nick(ctx):
                     print(f"can't change {member} - {ex}")
                     role_id_list = []
         print(i)
+
+
+@client.event
+async def on_member_update(before: discord.Member, after: discord.Member):
+    guild = client.get_guild(GUILD)
+    role_log_channel = guild.get_channel(ROLES_LOG)
+    if before.roles != after.roles:
+        roles_before = [role.name for role in before.roles]
+        roles_after = [role.name for role in after.roles]
+        if len(roles_before) > len(roles_after):
+            role = list(set(roles_before) ^ set(roles_after))[0]
+            await role_log_channel.send(embed=user_add_role_embed(after, role))
+        else:
+            role = list(set(roles_before) ^ set(roles_after))[0]
+            await role_log_channel.send(embed=user_remove_role_embed(after, role))
 
 
 if __name__ == '__main__':

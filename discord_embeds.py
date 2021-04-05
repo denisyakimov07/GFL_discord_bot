@@ -55,10 +55,19 @@ def stop_stream_embed(member: discord.Member, before: discord.VoiceState):
     return embed
 
 
+# could be does not working (member.mention)
 def on_member_join_to_server_embed(member: discord.Member):
     embed: discord.Embed = discord.Embed(colour=discord.Colour(0x89ff00),
                                          timestamp=datetime.datetime.now(tzinfo),
-                                         description=f"{member} has joined the server!")
+                                         description=f"{member.mention} has joined the server!")
+    embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
+    return embed
+
+
+def left_server_embed(member: discord.Member):
+    embed: discord.Embed = discord.Embed(colour=discord.Colour(0xff001f),
+                                         timestamp=datetime.datetime.now(tzinfo),
+                                         description=f"{member.mention} has left the server!")
     embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
     return embed
 
@@ -72,9 +81,17 @@ def new_user_to_verify_embed(member: discord.Member):
     return embed
 
 
-def left_server_embed(member: discord.Member):
+def user_add_role_embed(member: discord.Member, role):
+    embed: discord.Embed = discord.Embed(colour=discord.Colour(0x89ff00),
+                                         timestamp=datetime.datetime.now(tzinfo),
+                                         description=f"{member.mention} add role - {role}!")
+    embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
+    return embed
+
+
+def user_remove_role_embed(member: discord.Member, role):
     embed: discord.Embed = discord.Embed(colour=discord.Colour(0xff001f),
                                          timestamp=datetime.datetime.now(tzinfo),
-                                         description=f"{member.mention} has left the server!")
+                                         description=f"{member.mention} remove role - {role}!")
     embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
     return embed
