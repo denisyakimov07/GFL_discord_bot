@@ -1,4 +1,3 @@
-import json
 from datetime import datetime
 from enum import Enum
 from typing import Optional, Union, List, TypeVar, Generic, Any
@@ -104,10 +103,9 @@ class Token(BaseModel):
 class WebhookSubscription(BaseModel):
     url: str
     client: Union[Client, str]
-    authorization_header: Optional[str] = Field(alias='authorizationHeader')
-    model_operations: List[str] = Field(alias='modelOperations')
-    model_name: str = Field(alias='modelName')
-
+    topic: str
+    secret: str
+    expiresAt: datetime
 
 
 DiscordServerSettings.update_forward_refs()
