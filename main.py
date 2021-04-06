@@ -8,11 +8,15 @@ import datetime
 from discord_embeds import embeds_for_verify_user, join_embed, left_embed, switch_embed_embed, start_stream_embed, \
     stop_stream_embed, on_member_join_to_server_embed, new_user_to_verify_embed, left_server_embed, user_add_role_embed, \
     user_remove_role_embed
+from discord_server_settings_service import discord_server_settings_service
 from environment import get_env
 from esport_api import create_discord_user_api, add_discord_time_log, add_discord_stream_time_log, \
-    get_or_create_discord_server_settings, check_webhook_subscriptions, add_roles_to_server_settings, verified_by_member
+    get_or_create_discord_server_settings, check_webhook_subscriptions, verified_by_member
 from apex_api import get_apex_rank
 from models import DiscordServerSettings
+import api
+
+api.start_server_thread()
 
 intents = discord.Intents.default()
 intents.members = True
@@ -28,24 +32,14 @@ BOT_COMAND_channels_ID = ["788693067757781023", "816203477801762836"]
 timezone_offset = 8.0  # Pacific Standard Time (UTC−08:00)
 tzinfo = datetime.timezone(datetime.timedelta(hours=timezone_offset))
 
-guild_settings_dict: Dict[str, DiscordServerSettings] = {}
-
-# Create webhooks if they don't exist
-check_webhook_subscriptions()
-
-
 @client.event
 async def on_ready():
     print('ready-v0.04.3')
-    # Get or create all current guilds the bot belongs to
-    guild_settings_dict.update(get_or_create_discord_server_settings(client.guilds))
 
 
 @client.event
 async def on_guild_join(guild: discord.Guild):
-    # Get or create DiscordServerSettings if the guild has not been added before
-    guild_settings_dict.update(get_or_create_discord_server_settings([guild]))
-    add_roles_to_server_settings([guild], guild_settings_dict)
+    discord_server_settings_service.refresh_by_guild(guild)
 
 
 """auditlog-join-log"""
@@ -308,6 +302,9 @@ async def edit_nick(ctx):
                     role_id_list = []
         print(i)
 
+# @client.command(name='twitch')
+# async def link_twitch(twitch_user_id):
+#
 
 @client.event
 async def on_member_update(before: discord.Member, after: discord.Member):

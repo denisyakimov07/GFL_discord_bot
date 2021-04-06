@@ -11,7 +11,7 @@ from typing import List, Dict
 from pydantic.tools import parse_obj_as
 
 from environment import get_env
-from models import DiscordServerSettings, Pagination, DiscordRole, DiscordUser
+from models import DiscordServerSettings, Pagination, DiscordRole, DiscordUser, WebhookSubscription
 
 cached_get_user_api_id_by_discord_id = {}
 
@@ -19,7 +19,7 @@ cached_get_user_api_id_by_discord_id = {}
 def get_new_access_token():
     body = {"client_id": get_env().API_CLIENT_ID,
             "client_secret": get_env().API_CLIENT_SECRET,
-            "scope": "discord",
+            "scope": "discord webhooks",
             "grant_type": "client_credentials"
             }
     try:
@@ -82,94 +82,75 @@ def get_user_status_by_id_from_api(new_user):
         print(f"Cant check user {ex}")
 
 
-# Checks to see if a webhook subscription exists and creates it if it does not
 def check_webhook_subscriptions():
-    url = f'{get_env().API_BASE_URL}/api/model/WebhookSubscription'
-    webhook_url = f'{get_env().API_BASE_URL}/discordserversettings/updateById'
-    params = {'q': json.dumps({'client': get_env().API_CLIENT_ID, 'url': webhook_url})}
-    get_request = requests.get(url, headers=get_header(), params=params)
-    response_body = get_request.json()
-    if response_body['totalCount'] == 0:
-        # Create webhook
-        body = {'client': get_env().API_CLIENT_ID, 'url': webhook_url, 'modelOperations': ['updateById'],
-                'modelName': 'DiscordServerSettings'}
-        try:
-            requests.post(url, json=body, headers=get_header())
-        except Exception as ex:
-            print(f'Failed to create webhook {ex}')
+    """
+    Checks to see if a webhook subscription exists and creates it if it does not
+    """
+    headers = {"Authorization": f"{access_token.get_token()}"}
+    webhook_url = f'{get_env().BASE_URL}/discordserversettings'
+    url = f'{get_env().API_BASE_URL}/api/webhooks'
+    jsonBody = {
+        'url': webhook_url,
+        'leaseSeconds': 864000, # 10 days in seconds
+        'topic': 'discordserversettings',
+        'secret': 'monkeybars',
+        'mode': 'subscribe',
+    }
+    request = requests.post(url, json=jsonBody, headers=headers)
+
+    if request.status_code == 200:
+        subscription = WebhookSubscription.parse_raw(request.text)
+        print('Confirmed subscription', subscription)
+    else:
+        print(f'Failed to confirm webhook subscription: {request.text}')
 
 
-def get_or_create_discord_server_settings(guilds: List[discord.Guild]) -> Dict[str, DiscordServerSettings]:
-    server_models_dict: Dict[str, DiscordServerSettings] = {}
-
-    guild_ids = list(map(lambda x: str(x.id), guilds))
+def get_all_discord_server_settings() -> Pagination[DiscordServerSettings]:
     params = {
-        'q': json.dumps({'guildId': {'$in': guild_ids}}),
+        'populate': json.dumps(['roles', 'verificationRoles'])
+    }
+    headers = {"Authorization": f"{access_token.get_token()}"}
+    url = f'{get_env().API_BASE_URL}/api/model/DiscordServerSettings'
+    get_request = requests.get(url, headers=headers, params=params)
+    pagination: Pagination[DiscordServerSettings] = Pagination[DiscordServerSettings].parse_raw(get_request.text)
+    return pagination
+
+
+def get_discord_server_settings(discord_server_settings_id: str) -> DiscordServerSettings:
+    params = {
         'populate': json.dumps(['roles', 'verificationRoles'])
     }
 
+    headers = {"Authorization": f"{access_token.get_token()}"}
+    url = f'{get_env().API_BASE_URL}/api/model/DiscordServerSettings/{discord_server_settings_id}'
+    get_request = requests.get(url, headers=headers, params=params)
+    server_settings: DiscordServerSettings = DiscordServerSettings.parse_raw(get_request.text)
+    return server_settings
+
+
+def get_or_create_discord_server_settings(guild: discord.Guild) -> DiscordServerSettings:
+    populate = json.dumps(['roles', 'verificationRoles'])
+
+    params = {
+        'q': json.dumps({'guildId': str(guild.id)}),
+        'populate': populate
+    }
     headers = {"Authorization": f"{access_token.get_token()}"}
 
     url = f'{get_env().API_BASE_URL}/api/model/DiscordServerSettings'
     get_request = requests.get(url, headers=headers, params=params)
     pagination: Pagination[DiscordServerSettings] = Pagination[DiscordServerSettings].parse_raw(get_request.text)
 
-    # Discord Server Settings that already exist
-    found_guild_ids: List[str] = list(map(lambda x: x.guild_id, pagination.data))
+    server_settings: DiscordServerSettings
 
-    # Body models to create in API
-    create_many_body: List = []
+    if pagination.total_count == 0:
+        new_body = DiscordServerSettings()
+        new_body.guild_id = str(guild.id)
+        new_body.name = guild.name
+        request = requests.post(url, new_body, headers=headers, params={'populate': populate})
+        server_settings = DiscordServerSettings.parse_raw(request.text)
 
-    for guild in guilds:
-        guild_id_str = str(guild.id)
-        if guild_id_str not in found_guild_ids:
-            print(f'Need to create DiscordServerSettings for guild {guild.id} ({guild.name})')
-
-            create_many_body.append({
-                'name': guild.name,
-                'guildId': guild_id_str,
-            })
-        else:
-            discord_server_settings = [x for x in pagination.data if x.guild_id == guild_id_str][0]
-            server_models_dict[discord_server_settings.guild_id] = discord_server_settings
-
-    if len(create_many_body) > 0:
-        post_request = requests.post(url, json=create_many_body, headers=headers)
-        new_models: List[DiscordServerSettings] = parse_obj_as(List[DiscordServerSettings], post_request.text)
-        body = post_request.json()
-        for guild_model in new_models:
-            server_models_dict[guild_model.guild_id] = guild_model
-            print(f'Added DiscordServerSettings for {guild_model.name}')
-
-    add_roles_to_server_settings(guilds, server_models_dict)
-    return server_models_dict
-
-
-def add_roles_to_server_settings(guilds: List[discord.Guild], server_models_dict: Dict[str, DiscordServerSettings]):
-    create_many_body = []
-
-    for guild in guilds:
-        server_settings = server_models_dict[str(guild.id)]
-
-        # roles_dict = {}
-
-        for role in guild.roles:
-            roles_in_api: List[DiscordRole] = server_settings.roles or []
-            existing_role = next(iter(filter(lambda x: x.role_id == str(role.id), roles_in_api)), None)
-            if existing_role is None:
-                create_many_body.append({
-                    'guildId': server_settings.guild_id,
-                    'roleId': str(role.id),
-                    'name': role.name
-                })
-
-    if len(create_many_body) > 0:
-        url = f'{get_env().API_BASE_URL}/api/model/DiscordRole'
-        put_response = requests.post(url, headers=get_header(), json=create_many_body)
-        if put_response.status_code != 200:
-            print(f'Failed to create DiscordRole role\'s: {put_response.json()}')
-        else:
-            print(f'Added roles to guilds: {list(map(lambda x: x.name, guilds))}')
+    return server_settings
 
 
 def create_discord_user_api(new_user):
