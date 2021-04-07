@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Union
 
 import discord
 
@@ -31,5 +31,7 @@ class __DiscordServerSettingsService():
         server_settings = get_discord_server_settings(discord_server_settings_id)
         self.server_settings[server_settings.guild_id] = server_settings
 
+    def has_guild(self, guild_id: Union[str, int]):
+        return str(guild_id) in self.server_settings
 
 discord_server_settings_service = __DiscordServerSettingsService()

@@ -1,22 +1,20 @@
-from typing import Dict
+import datetime
 
 import discord
 from discord.ext import commands
 
-import datetime
-
+import http_server
+from apex_api import get_apex_rank
+from api import model_api_service
 from discord_embeds import embeds_for_verify_user, join_embed, left_embed, switch_embed_embed, start_stream_embed, \
     stop_stream_embed, on_member_join_to_server_embed, new_user_to_verify_embed, left_server_embed, user_add_role_embed, \
     user_remove_role_embed
 from discord_server_settings_service import discord_server_settings_service
 from environment import get_env
-from esport_api import create_discord_user_api, add_discord_time_log, add_discord_stream_time_log, \
-    get_or_create_discord_server_settings, check_webhook_subscriptions, verified_by_member
-from apex_api import get_apex_rank
-from models import DiscordServerSettings
-import api
+from esport_api import create_discord_user_api, add_discord_time_log, add_discord_stream_time_log, verified_by_member
+from models import DiscordChannelMetadata
 
-api.start_server_thread()
+http_server.start_server_thread()
 
 intents = discord.Intents.default()
 intents.members = True
@@ -31,6 +29,7 @@ BOT_COMAND_channels_ID = ["788693067757781023", "816203477801762836"]
 
 timezone_offset = 8.0  # Pacific Standard Time (UTC−08:00)
 tzinfo = datetime.timezone(datetime.timedelta(hours=timezone_offset))
+
 
 @client.event
 async def on_ready():
@@ -47,10 +46,22 @@ async def on_guild_join(guild: discord.Guild):
 
 @client.event
 async def on_member_remove(member):
-    if member.guild.id == GUILD:
-        guild = client.get_guild(GUILD)
-        channel = guild.get_channel(SERVER_LOG)
+    server_settings = discord_server_settings_service.server_settings[str(member.guild.id)]
+    if server_settings is not None:
+        channelMeta = model_api_service.find_one(DiscordChannelMetadata, {
+            'tags': {'$in': ['auditlog-join']},
+            'serverSettings': server_settings.id,
+        })
+        if channelMeta is None:
+            return
+        guild = client.get_guild(int(server_settings.guild_id))
+        channel = guild.get_channel(int(channelMeta.channel_id))
         await channel.send(embed=left_server_embed(member))
+
+    # if member.guild.id == GUILD:
+    #     guild = client.get_guild(GUILD)
+    #     channel = guild.get_channel(SERVER_LOG)
+    #     await channel.send(embed=left_server_embed(member))
 
 
 """Server verify"""
@@ -58,7 +69,7 @@ VERIFICATION_CHANNEL_ID = [709285744794927125, 819347673575456769]  # Discord TP
 
 
 @client.event
-async def on_member_join(member):
+async def on_member_join(member: discord.Member):
     if member.guild.id == GUILD:
         new_user = {"memberName": f"{member}",
                     "memberId": f"{member.id}",
@@ -160,6 +171,35 @@ async def on_raw_reaction_remove(payload):
 async def clear(ctx, amount=0):
     if ctx.author.id == 339287982320254976:
         await ctx.channel.purge(limit=amount + 1)
+
+
+@client.command()
+async def tag(ctx: discord.ext.commands.Context, query: str, tag_name: str):
+    channel_meta: DiscordChannelMetadata = model_api_service.find_one(
+        DiscordChannelMetadata,
+        {'channelId': str(ctx.channel.id)}
+    )
+    if channel_meta is None:
+        server_settings = discord_server_settings_service.server_settings[str(ctx.guild.id)]
+        channel_meta = model_api_service.create_one(
+            DiscordChannelMetadata.construct(channel_id=str(ctx.channel.id), server_settings=server_settings.id))
+    if query is None and tag_name is None and channel_meta is None:
+        await ctx.send('This channel has no metadata')
+    elif query is not None and tag_name is None:
+        await ctx.send('Please specify the tag you want to add. Ex: !tag {add OR remove} {YOUR_TAG}')
+    else:
+        if query not in ['add', 'remove']:
+            await ctx.send('Invalid query. Must be "add" or "remove". Ex: !tag {add OR remove} {YOUR_TAG}')
+            return
+
+        update_query = {}
+        if query == 'add':
+            update_query = {'$addToSet': {'tags': tag_name}}
+        elif query == 'remove':
+            update_query = {'$pull': {'tags': tag_name}}
+
+        model_api_service.update_by_id(DiscordChannelMetadata, channel_meta.id, update_query)
+        await ctx.send(f'Added tag: {tag_name}')
 
 
 """Log system"""
@@ -301,6 +341,7 @@ async def edit_nick(ctx):
                     print(f"can't change {member} - {ex}")
                     role_id_list = []
         print(i)
+
 
 # @client.command(name='twitch')
 # async def link_twitch(twitch_user_id):

@@ -42,9 +42,14 @@ class DiscordRole(BaseModel):
 class DiscordServerSettings(BaseModel):
     guild_id: str = Field(alias='guildId')
     name: str
-    verification_roles: Union[List['DiscordVerificationRole'], List[str]] = Field(alias='verificationRoles')
-    roles: Union[List[str], List[DiscordRole]]
+    verification_roles: Optional[Union[List['DiscordVerificationRole'], List[str]]] = Field(alias='verificationRoles')
     bot_command_channel_id: Optional[str] = Field(alias='botCommandChannelId')
+
+
+class DiscordChannelMetadata(BaseModel):
+    tags: Optional[List[str]]
+    server_settings: Union[str, DiscordServerSettings] = Field(alias='serverSettings')
+    channel_id: str = Field(alias='channelId')
 
 
 TModel = TypeVar('TModel')
@@ -59,19 +64,18 @@ class Pagination(GenericModel, Generic[TModel]):
 
 class DiscordUser(BaseModel):
     id: str
-    member_name: str = Field(alias='memberName')
-    member_id: str = Field(alias='memberId')
+    member_name: Optional[str] = Field(alias='memberName')
+    member_id: Optional[str] = Field(alias='memberId')
     member_nickname: Optional[str] = Field(alias='memberNickname')
     verified_by_member_id: Optional[str] = Field(alias='verifiedByMemberId')
     verified_at: Optional[datetime] = Field(alias='verifiedAt')
     avatar_url: Optional[str] = Field(alias='avatarUrl')
-    coins: float
-    notes: Union['DiscordUserNote', List[str]]
+    notes: Optional[Union[List['DiscordUserNote'], List[str]]]
 
 
 class DiscordUserNote(BaseModel):
-    discord_user: Union['DiscordUser', str] = Field(alias='discordUser')
-    text: str
+    discord_user: Optional[Union['DiscordUser', str]] = Field(alias='discordUser')
+    text: Optional[str]
 
     by_user: Optional[Union['User', str]] = Field(alias='byUser')
     by_discord_user: Optional[Union['DiscordUser', str]] = Field(alias='byDiscordUser')
@@ -105,7 +109,23 @@ class WebhookSubscription(BaseModel):
     client: Union[Client, str]
     topic: str
     secret: str
-    expiresAt: datetime
+    expires_at: datetime = Field(alias='expiresAt')
+
+
+class DeleteResult(BaseModelPydantic):
+    success: bool
+
+
+class DeleteManyResult(BaseModelPydantic):
+    n: Optional[int]
+    ok: Optional[int]
+    deleted_count: Optional[int] = Field(alias='deleted_count')
+
+
+class UpdateManyResult(BaseModelPydantic):
+    n: Optional[int]
+    n_modified: Optional[int] = Field(alias='nModified')
+    ok: Optional[int]
 
 
 DiscordServerSettings.update_forward_refs()
