@@ -168,36 +168,6 @@ async def clear(ctx, amount=0):
     if ctx.author.id == 339287982320254976:
         await ctx.channel.purge(limit=amount + 1)
 
-
-@client.command()
-async def tag(ctx: discord.ext.commands.Context, query: str, tag_name: str):
-    channel_meta: DiscordChannelMetadata = model_api_service.find_one(
-        DiscordChannelMetadata,
-        {'channelId': str(ctx.channel.id)}
-    )
-    if channel_meta is None:
-        server_settings = discord_server_settings_service.server_settings[str(ctx.guild.id)]
-        channel_meta = model_api_service.create_one(
-            DiscordChannelMetadata.construct(channel_id=str(ctx.channel.id), server_settings=server_settings.id))
-    if query is None and tag_name is None and channel_meta is None:
-        await ctx.send('This channel has no metadata')
-    elif query is not None and tag_name is None:
-        await ctx.send('Please specify the tag you want to add. Ex: !tag {add OR remove} {YOUR_TAG}')
-    else:
-        if query not in ['add', 'remove']:
-            await ctx.send('Invalid query. Must be "add" or "remove". Ex: !tag {add OR remove} {YOUR_TAG}')
-            return
-
-        update_query = {}
-        if query == 'add':
-            update_query = {'$addToSet': {'tags': tag_name}}
-        elif query == 'remove':
-            update_query = {'$pull': {'tags': tag_name}}
-
-        model_api_service.update_by_id(DiscordChannelMetadata, channel_meta.id, update_query)
-        await ctx.send(f'Added tag: {tag_name}')
-
-
 """Log system"""
 GUILD = 696277112600133633
 CHANNELS_LOG = 818756453778063380  # auditlog-voice
@@ -285,7 +255,13 @@ async def rank(ctx, user_name=None):
 
 @client.command()
 async def verify(ctx, user_name=None):
-    if int(ctx.channel.id) in VERIFICATION_CHANNEL_ID:
+    server_settings = discord_server_settings_service.server_settings[str(ctx.guild.id)]
+    verify_channel_id = server_settings.get_special_channel(SpecialChannelEnum.verify)
+    if verify_channel_id is None:
+        # TODO: Maybe warn user that the special channel isn't set?
+        return
+
+    if str(ctx.channel.id) == verify_channel_id:
         author = ctx.message.author
         user_roles_list = [role.id for role in author.roles]
         intersection_roles = set(user_roles_list) & set(ROLE_ALLOWED_TO_VERIFY_ID)
@@ -348,8 +324,11 @@ async def on_member_update(before: discord.Member, after: discord.Member):
     server_settings = discord_server_settings_service.server_settings[str(after.guild.id)]
     guild = client.get_guild(int(server_settings.guild_id))
     channel_id = server_settings.get_special_channel(SpecialChannelEnum.audit_log_roles)
+    if channel_id is None:
+        # TODO: Maybe warn the user that the special channel isn't set?
+        return
 
-    role_log_channel = guild.get_channel(channel_id)
+    role_log_channel = guild.get_channel(int(channel_id))
     if before.roles != after.roles:
         roles_before = [role.name for role in before.roles]
         roles_after = [role.name for role in after.roles]
