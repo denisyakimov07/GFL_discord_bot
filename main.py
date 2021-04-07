@@ -12,7 +12,7 @@ from discord_embeds import embeds_for_verify_user, join_embed, left_embed, switc
 from discord_server_settings_service import discord_server_settings_service
 from environment import get_env
 from esport_api import create_discord_user_api, add_discord_time_log, add_discord_stream_time_log, verified_by_member
-from models import DiscordChannelMetadata
+from models import SpecialChannelEnum
 
 http_server.start_server_thread()
 
@@ -48,15 +48,11 @@ async def on_guild_join(guild: discord.Guild):
 async def on_member_remove(member):
     server_settings = discord_server_settings_service.server_settings[str(member.guild.id)]
     if server_settings is not None:
-        channelMeta = model_api_service.find_one(DiscordChannelMetadata, {
-            'tags': {'$in': ['auditlog-join']},
-            'serverSettings': server_settings.id,
-        })
-        if channelMeta is None:
-            return
+        channel_id = str(server_settings.get_special_channel(SpecialChannelEnum.audit_log_join))
         guild = client.get_guild(int(server_settings.guild_id))
-        channel = guild.get_channel(int(channelMeta.channel_id))
-        await channel.send(embed=left_server_embed(member))
+        channel = guild.get_channel(int(channel_id))
+        if channel is not None:
+            await channel.send(embed=left_server_embed(member))
 
     # if member.guild.id == GUILD:
     #     guild = client.get_guild(GUILD)

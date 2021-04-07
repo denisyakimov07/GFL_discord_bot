@@ -107,7 +107,7 @@ class __ModelApiService():
         """
         params = {}
         if populate is not None:
-            params['populate'] = populate
+            params['populate'] = json.dumps(populate)
 
         response = requests.get(
             self.get_model_url(model_class, model_id),

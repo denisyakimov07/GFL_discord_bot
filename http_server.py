@@ -12,6 +12,7 @@ app = Flask(__name__)
 
 check_webhook_subscriptions()
 
+
 @app.route('/discordserversettings', methods=['POST'])
 def discord_server_settings_update_by_id_webhook():
     discord_server_settings = DiscordServerSettings.parse_raw(request.data)

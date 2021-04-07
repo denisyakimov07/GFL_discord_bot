@@ -23,6 +23,17 @@ class ModelOperationEnum(str, Enum):
     find_many = 'findMany'
 
 
+class SpecialChannelEnum(str, Enum):
+    audit_log_join = 'auditlogjoin',
+    audit_log_voice = 'auditlogvoice',
+    audit_log_event = 'auditlogevent',
+    audit_log_roles = 'auditlogroles',
+    audit_log_messages = 'auditlogmessages',
+    audit_log_bans = 'auditlogbans',
+    audit_log_admin = 'auditlogadmin',
+    verify = 'verify',
+
+
 class Client(BaseModel):
     name: str
     redirect_uris: Optional[str] = Field(alias='redirectUris')
@@ -43,13 +54,12 @@ class DiscordServerSettings(BaseModel):
     guild_id: str = Field(alias='guildId')
     name: str
     verification_roles: Optional[Union[List['DiscordVerificationRole'], List[str]]] = Field(alias='verificationRoles')
-    bot_command_channel_id: Optional[str] = Field(alias='botCommandChannelId')
+    special_channels: Optional[dict] = Field(alias='specialChannels')
 
-
-class DiscordChannelMetadata(BaseModel):
-    tags: Optional[List[str]]
-    server_settings: Union[str, DiscordServerSettings] = Field(alias='serverSettings')
-    channel_id: str = Field(alias='channelId')
+    def get_special_channel(self, key: SpecialChannelEnum) -> Union[None, str]:
+        if self.special_channels is None:
+            return None
+        return self.special_channels[key]
 
 
 TModel = TypeVar('TModel')

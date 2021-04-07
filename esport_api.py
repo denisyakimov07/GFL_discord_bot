@@ -54,7 +54,7 @@ def get_all_discord_server_settings() -> Pagination[DiscordServerSettings]:
 
 
 def get_discord_server_settings(discord_server_settings_id: str) -> DiscordServerSettings:
-    return model_api_service.find_by_id(DiscordServerSettings, discord_server_settings_id)
+    return model_api_service.find_by_id(DiscordServerSettings, discord_server_settings_id, populate=['verificationRoles'])
 
 
 def get_or_create_discord_server_settings(guild: discord.Guild) -> DiscordServerSettings:
