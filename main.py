@@ -104,7 +104,7 @@ settings = {"ROLE_ALLOWED_TO_VERIFY_ID": [818901497244024842, 722195472411787455
             "VERIFY_ROLE_ID": 703686185968599111
             }
 
-roles_assignment_setup = {"massage_id": 828074955374854164,
+roles_assignment_setup = {"massage_id": 828861933280428043,
                           "emoji_to_role": {"Apex": 818814719854116914,
                                             "WorldofWarcraft": 824845946684571719,
                                             "CallofDuty": 824846357214396477,
