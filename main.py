@@ -345,8 +345,11 @@ async def edit_nick(ctx):
 
 @client.event
 async def on_member_update(before: discord.Member, after: discord.Member):
-    guild = client.get_guild(GUILD)
-    role_log_channel = guild.get_channel(ROLES_LOG)
+    server_settings = discord_server_settings_service.server_settings[str(after.guild.id)]
+    guild = client.get_guild(int(server_settings.guild_id))
+    channel_id = server_settings.get_special_channel(SpecialChannelEnum.audit_log_roles)
+
+    role_log_channel = guild.get_channel(channel_id)
     if before.roles != after.roles:
         roles_before = [role.name for role in before.roles]
         roles_after = [role.name for role in after.roles]

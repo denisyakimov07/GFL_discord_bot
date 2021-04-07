@@ -44,7 +44,7 @@ def check_webhook_subscriptions():
 
     if request.status_code == 200:
         subscription = WebhookSubscription.parse_raw(request.text)
-        print('Confirmed subscription', subscription)
+        print('Confirmed webhook subscription', subscription)
     else:
         print(f'Failed to confirm webhook subscription: {request.text}')
 

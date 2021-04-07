@@ -93,7 +93,7 @@ class DiscordUserNote(BaseModel):
 
 class DiscordVerificationRole(BaseModel):
     id: str
-    discord_role: Union[DiscordRole, str] = Field(alias='discordRole')
+    discord_role_id: Union[DiscordRole, str] = Field(alias='discordRoleId')
     max_per_day: int = Field(alias='maxPerDay')
 
 
