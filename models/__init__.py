@@ -34,6 +34,10 @@ class SpecialChannelEnum(str, Enum):
     verify = 'verify',
 
 
+class SpecialRoleEnum(str, Enum):
+    verify = 'verify',
+
+
 class Client(BaseModel):
     name: str
     redirect_uris: Optional[str] = Field(alias='redirectUris')
@@ -55,11 +59,17 @@ class DiscordServerSettings(BaseModel):
     name: str
     verification_roles: Optional[Union[List['DiscordVerificationRole'], List[str]]] = Field(alias='verificationRoles')
     special_channels: Optional[dict] = Field(alias='specialChannels')
+    special_roles: Optional[dict] = Field(alias='specialRoles')
 
     def get_special_channel(self, key: SpecialChannelEnum) -> Union[None, str]:
         if self.special_channels is None:
             return None
         return self.special_channels[key]
+
+    def get_special_role(self, key: SpecialRoleEnum) -> Union[None, str]:
+        if self.special_roles is None:
+            return None
+        return self.special_roles[key]
 
 
 TModel = TypeVar('TModel')
