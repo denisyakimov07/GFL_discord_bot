@@ -1,4 +1,6 @@
 import datetime
+import ast
+
 
 import discord
 from discord.ext import commands
@@ -53,11 +55,6 @@ async def on_member_remove(member):
         channel = guild.get_channel(int(channel_id))
         if channel is not None:
             await channel.send(embed=left_server_embed(member))
-
-    # if member.guild.id == GUILD:
-    #     guild = client.get_guild(GUILD)
-    #     channel = guild.get_channel(SERVER_LOG)
-    #     await channel.send(embed=left_server_embed(member))
 
 
 """Server verify"""
@@ -338,6 +335,18 @@ async def on_member_update(before: discord.Member, after: discord.Member):
         else:
             role = list(set(roles_before) ^ set(roles_after))[0]
             await role_log_channel.send(embed=user_remove_role_embed(after, role))
+
+
+@client.command()
+async def to_embed(ctx: discord.ext.commands.Context):
+    new_embed = ctx.message.content.replace("!to_embed ", "")
+    if new_embed is not None:
+        try:
+            new_embed = discord.Embed.from_dict(ast.literal_eval(new_embed))
+            await ctx.send(embed=new_embed)
+            await ctx.message.delete()
+        except Exception as ex:
+            print(ex)
 
 
 if __name__ == '__main__':
