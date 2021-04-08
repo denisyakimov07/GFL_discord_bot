@@ -326,7 +326,7 @@ async def on_member_update(before: discord.Member, after: discord.Member):
 
 @client.command()
 async def to_embed(ctx: discord.ext.commands.Context):
-    new_embed = ctx.message.content.replace("!to_embed ", "").replace(" ", "")
+    new_embed = ctx.message.content.replace("!to_embed ", "")
     if new_embed is not None:
         try:
             new_embed = discord.Embed.from_dict(ast.literal_eval(new_embed))
