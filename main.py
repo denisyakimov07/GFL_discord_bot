@@ -1,4 +1,5 @@
-from typing import Dict
+import ast
+
 
 import discord
 from discord.ext import commands
@@ -31,6 +32,7 @@ BOT_COMAND_channels_ID = ["788693067757781023", "816203477801762836"]
 
 timezone_offset = 8.0  # Pacific Standard Time (UTC−08:00)
 tzinfo = datetime.timezone(datetime.timedelta(hours=timezone_offset))
+
 
 @client.event
 async def on_ready():
@@ -302,6 +304,7 @@ async def edit_nick(ctx):
                     role_id_list = []
         print(i)
 
+
 # @client.command(name='twitch')
 # async def link_twitch(twitch_user_id):
 #
@@ -319,6 +322,18 @@ async def on_member_update(before: discord.Member, after: discord.Member):
         else:
             role = list(set(roles_before) ^ set(roles_after))[0]
             await role_log_channel.send(embed=user_remove_role_embed(after, role))
+
+
+@client.command()
+async def to_embed(ctx: discord.ext.commands.Context):
+    new_embed = ctx.message.content.replace("!to_embed ", "").replace(" ", "")
+    if new_embed is not None:
+        try:
+            new_embed = discord.Embed.from_dict(ast.literal_eval(new_embed))
+            await ctx.send(embed=new_embed)
+            await ctx.message.delete()
+        except Exception as ex:
+            print(ex)
 
 
 if __name__ == '__main__':
