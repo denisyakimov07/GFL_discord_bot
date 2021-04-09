@@ -1,20 +1,20 @@
 import datetime
 import ast
 
-
 import discord
 from discord.ext import commands
 
 import http_server
 from apex_api import get_apex_rank
-from api import model_api_service
 from discord_embeds import embeds_for_verify_user, join_embed, left_embed, switch_embed_embed, start_stream_embed, \
     stop_stream_embed, on_member_join_to_server_embed, new_user_to_verify_embed, left_server_embed, user_add_role_embed, \
     user_remove_role_embed
+from discord_helper_utils import get_channel_by_special_channel
 from discord_server_settings_service import discord_server_settings_service
 from environment import get_env
-from esport_api import create_discord_user_api, add_discord_time_log, add_discord_stream_time_log, verified_by_member
-from models import SpecialChannelEnum
+from esport_api import create_discord_user_api, add_discord_time_log, add_discord_stream_time_log, verified_by_member, \
+    verify_member
+from models import SpecialChannelEnum, SpecialRoleEnum
 
 http_server.start_server_thread()
 
@@ -48,13 +48,9 @@ async def on_guild_join(guild: discord.Guild):
 
 @client.event
 async def on_member_remove(member):
-    server_settings = discord_server_settings_service.server_settings[str(member.guild.id)]
-    if server_settings is not None:
-        channel_id = str(server_settings.get_special_channel(SpecialChannelEnum.audit_log_join))
-        guild = client.get_guild(int(server_settings.guild_id))
-        channel = guild.get_channel(int(channel_id))
-        if channel is not None:
-            await channel.send(embed=left_server_embed(member))
+    channel = get_channel_by_special_channel(member.guild, SpecialChannelEnum.audit_log_join)
+    if channel is not None:
+        await channel.send(embed=left_server_embed(member))
 
 
 """Server verify"""
@@ -63,19 +59,14 @@ VERIFICATION_CHANNEL_ID = [709285744794927125, 819347673575456769]  # Discord TP
 
 @client.event
 async def on_member_join(member: discord.Member):
-    if member.guild.id == GUILD:
-        new_user = {"memberName": f"{member}",
-                    "memberId": f"{member.id}",
-                    "avatarUrl": f"{member.avatar_url}"
-                    }
-        guild = client.get_guild(GUILD)
-        channel = guild.get_channel(SERVER_LOG)
-        verify_channel = guild.get_channel(709285744794927125)
-        """ADD user to API DB"""
-        create_discord_user_api(new_user)
-        await channel.send(embed=on_member_join_to_server_embed(member))
-        msg = await verify_channel.send(embed=new_user_to_verify_embed(member))
-        await msg.add_reaction("✅")
+    server_log_channel = get_channel_by_special_channel(member.guild, SpecialChannelEnum.audit_log_join)
+    if server_log_channel is not None:
+        await server_log_channel.send(embed=on_member_join_to_server_embed(member))
+
+    verify_channel = get_channel_by_special_channel(member.guild, SpecialChannelEnum.verify)
+    if verify_channel is not None:
+        message = await verify_channel.send(embed=new_user_to_verify_embed(member))
+        await message.add_reaction("✅")
 
 
 """Server role manager"""
@@ -112,29 +103,31 @@ roles_assignment_setup = {"massage_id": 828861933280428043,
 
 
 @client.event
-async def on_raw_reaction_add(payload):
-    if payload.channel_id in VERIFICATION_CHANNEL_ID and str(payload.emoji.name) == "✅" and int(
-            payload.user_id) != BOT_ID:
-        msg = await client.get_channel(payload.channel_id).fetch_message(payload.message_id)
-        if msg.author.id == BOT_ID:
-            new_user_id = msg.embeds[0].title
-            member = payload.member
-            user_roles_list = [role.id for role in member.roles]
-            intersection_roles = set(user_roles_list) & set(ROLE_ALLOWED_TO_VERIFY_ID)
-            if len(intersection_roles) > 0:
-                guild = client.get_guild(GUILD)
-                new_user = await guild.fetch_member(int(new_user_id))
-                role = discord.utils.get(member.guild.roles, id=VERIFY_ROLE_ID)
-                await new_user.add_roles(role)
-                await msg.delete()
-                channel_id = payload.channel_id
-                channel = client.get_channel(channel_id)
-                await channel.send(embed=embeds_for_verify_user(new_user, member))
+async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
+    guild = client.get_guild(payload.guild_id)
+    verify_channel = get_channel_by_special_channel(guild, SpecialChannelEnum.verify)
+    if payload.channel_id == verify_channel.id and str(payload.emoji.name) == '✅' and client.user.id != payload.user_id:
+        server_settings = discord_server_settings_service.server_settings[str(payload.guild_id)]
+        if server_settings.can_member_verify(payload.member):
+            message = await verify_channel.fetch_message(payload.message_id)
+            # TODO: Check how many members they have verified in the last 24 hours
+            member_to_verify: discord.Member = await guild.fetch_member(int(message.embeds[0].title))
+            verify_role_id = server_settings.get_special_role(SpecialRoleEnum.verify)
+            if verify_role_id is None:
+                print(f'No verify role has been set in the Management Portal')
+                return
+            verify_role = discord.utils.get(guild.roles, id=int(verify_role_id))
+            if verify_role is None:
+                print(f'SpecialRole \'verify\' is invalid. It may have been deleted')
+                return
 
-                """API"""
-                new_user = {"memberId": f"{new_user.id}"}
-                admin_member = {"memberId": f"{member.id}"}
-                verified_by_member(new_user, admin_member)
+            verify_member(payload.member, member_to_verify)
+            await member_to_verify.add_roles(verify_role)
+            await message.delete()
+            await verify_channel.send(embed=embeds_for_verify_user(member_to_verify, payload.member))
+        else:
+            await verify_channel.send('You do not have permission to verify members')
+        return
 
     if payload.message_id == roles_assignment_setup['massage_id']:
         try:
@@ -164,6 +157,7 @@ async def on_raw_reaction_remove(payload):
 async def clear(ctx, amount=0):
     if ctx.author.id == 339287982320254976:
         await ctx.channel.purge(limit=amount + 1)
+
 
 """Log system"""
 GUILD = 696277112600133633

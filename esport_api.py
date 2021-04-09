@@ -54,7 +54,8 @@ def get_all_discord_server_settings() -> Pagination[DiscordServerSettings]:
 
 
 def get_discord_server_settings(discord_server_settings_id: str) -> DiscordServerSettings:
-    return model_api_service.find_by_id(DiscordServerSettings, discord_server_settings_id, populate=['verificationRoles'])
+    return model_api_service.find_by_id(DiscordServerSettings, discord_server_settings_id,
+                                        populate=['verificationRoles'])
 
 
 def get_or_create_discord_server_settings(guild: discord.Guild) -> DiscordServerSettings:
@@ -65,6 +66,18 @@ def get_or_create_discord_server_settings(guild: discord.Guild) -> DiscordServer
         return model_api_service.create_one(new_body)
     else:
         return pagination.data[0]
+
+
+def get_create_discord_user_by_member(member: discord.Member) -> DiscordUser:
+    discord_user = model_api_service.find_one(DiscordUser, {'memberId': str(member.id)})
+    if discord_user is None:
+        model = DiscordUser.construct(
+            member_id=str(member.id),
+            member_name=member.display_name,
+            avatar_url=f'{member.avatar_url.BASE}{member.avatar_url._url}'
+        )
+        discord_user = model_api_service.create_one(model)
+    return discord_user
 
 
 def create_discord_user_api(new_user):
@@ -101,7 +114,8 @@ def add_discord_time_log(user_add_time_log, status):
 
 def add_discord_stream_time_log(user_stream_log, status):
     if get_user_api_id_by_discord_id(user_stream_log) is not None:
-        resp = requests.post(f'{get_env().API_BASE_URL}/api/model/DiscordOnlineStreamTimeLog', headers=model_api_service.get_headers(),
+        resp = requests.post(f'{get_env().API_BASE_URL}/api/model/DiscordOnlineStreamTimeLog',
+                             headers=model_api_service.get_headers(),
                              json=new_user_time_log(user_stream_log, status))
         print(f"DiscordOnlineStreamTimeLog {resp.status_code} {resp.json()}.")
     else:
@@ -129,6 +143,14 @@ def get_user_api_id_by_discord_id(user_discord):
         except Exception as ex:
             print(f"Bad request, discord id - {user_discord['memberId']}, Exception {ex}.")
             return
+
+
+def verify_member(from_member: discord.Member, to_member: discord.Member):
+    from_user = get_create_discord_user_by_member(from_member)
+    to_user = get_create_discord_user_by_member(to_member)
+    model_api_service.update_by_id(DiscordUser, to_user.id, {
+        'verifiedBy': from_user.id,
+    })
 
 
 def verified_by_member(new_user, admin_user):

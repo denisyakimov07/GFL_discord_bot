@@ -2,6 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional, Union, List, TypeVar, Generic, Any
 
+import discord
 from pydantic import BaseModel as BaseModelPydantic, Field
 from pydantic.generics import GenericModel
 
@@ -62,6 +63,11 @@ class DiscordServerSettings(BaseModel):
     special_roles: Optional[dict] = Field(alias='specialRoles')
 
     def get_special_channel(self, key: SpecialChannelEnum) -> Union[None, str]:
+        """
+        Returns the channel id (str) that was configured in the Management Portal
+        :param key:
+        :return:
+        """
         if self.special_channels is None:
             return None
         return self.special_channels[key]
@@ -70,6 +76,19 @@ class DiscordServerSettings(BaseModel):
         if self.special_roles is None:
             return None
         return self.special_roles[key]
+
+    def can_member_verify(self, member: discord.Member) -> bool:
+        """
+        Checks to see if verification_roles contains a role that the member has
+        :param member:
+        :return:
+        """
+        roles_allowed_to_verify = [int(verification_role.discord_role_id) for verification_role in self.verification_roles]
+
+        user_roles_list = [role.id for role in member.roles]
+
+        intersection_roles = set(user_roles_list) & set(roles_allowed_to_verify)
+        return len(intersection_roles) > 0
 
 
 TModel = TypeVar('TModel')

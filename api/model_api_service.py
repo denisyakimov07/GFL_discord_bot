@@ -188,9 +188,11 @@ class __ModelApiService():
         :param model: The model to create. Do NOT include the id
         :return:
         """
+
+        model_dict = model.dict(exclude_defaults=True, by_alias=True, exclude_unset=True)
         response = requests.post(
             self.get_model_url(model),
-            json=model.dict(exclude_defaults=True, by_alias=True),
+            json=model_dict,
             headers=self.get_headers()
         )
 
