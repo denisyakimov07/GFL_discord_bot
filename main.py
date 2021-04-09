@@ -54,7 +54,6 @@ async def on_member_remove(member):
 
 
 """Server verify"""
-VERIFICATION_CHANNEL_ID = [709285744794927125, 819347673575456769]  # Discord TPG (verify-a-friend) 709285744794927125
 
 
 @client.event
@@ -72,21 +71,6 @@ async def on_member_join(member: discord.Member):
 """Server role manager"""
 
 # Verification new users
-ROLE_ALLOWED_TO_VERIFY_ID = [
-    818901497244024842,  # Member
-    722195472411787455,  # Coach
-    703688573978804224,  # Staff
-    709595149419675689,  # Director
-    812537908736819280,  # Admin
-    696277516020875324  # Owner
-]
-BOT_ID = 786029312788791346
-VERIFY_ROLE_ID = 703686185968599111
-
-settings = {"ROLE_ALLOWED_TO_VERIFY_ID": [818901497244024842, 722195472411787455, ],
-            "BOT_ID": 696277516020875324,
-            "VERIFY_ROLE_ID": 703686185968599111
-            }
 
 roles_assignment_setup = {"massage_id": 828861933280428043,
                           "emoji_to_role": {"Apex": 818814719854116914,
