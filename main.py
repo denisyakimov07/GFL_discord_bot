@@ -245,7 +245,7 @@ async def rank(ctx, user_name=None):
 
 
 @client.command()
-async def verify(ctx, user_name=None):
+async def verify(ctx: discord.ext.commands.Context, user_name=None):
     server_settings = discord_server_settings_service.server_settings[str(ctx.guild.id)]
     verify_channel_id = server_settings.get_special_channel(SpecialChannelEnum.verify)
     if verify_channel_id is None:
@@ -254,30 +254,32 @@ async def verify(ctx, user_name=None):
 
     if str(ctx.channel.id) == verify_channel_id:
         author = ctx.message.author
-        user_roles_list = [role.id for role in author.roles]
-        intersection_roles = set(user_roles_list) & set(ROLE_ALLOWED_TO_VERIFY_ID)
-        member = None
-        if len(intersection_roles) > 0:
-            try:
-                member = discord.utils.get(client.get_all_members(), name=user_name.split("#")[0],
-                                           discriminator=user_name.split("#")[1])
-            except Exception as ex:
-                print(ex)
-                await ctx.send("Can't fine User")
-            if len(member.roles) == 1:
-                role = discord.utils.get(member.guild.roles, id=VERIFY_ROLE_ID)
-                await member.add_roles(role)
-                await ctx.send(embed=embeds_for_verify_user(member, author))
 
-                """API"""
-                new_user = {"memberId": f"{member.id}"}
-                admin_member = {"memberId": f"{member.id}"}
-                verified_by_member(new_user, admin_member)
-            else:
-                await ctx.send('User already verified')
-        else:
+        if not server_settings.can_member_verify(ctx.message.author):
             await ctx.send('No permission to verify users')
+            return
 
+        if len(ctx.message.mentions) == 0:
+            await ctx.send("You didn't mention anyone. Try !verify @{MEMBER}")
+            return
+
+        verify_role_id = server_settings.get_special_role(SpecialRoleEnum.verify)
+        verify_role = discord.utils.get(ctx.guild.roles, id=int(verify_role_id))
+        if verify_role is None:
+            print(f'No verification role set for guild. id={ctx.guild.id} name={ctx.guild.name}')
+            return
+        member_to_verify_id = ctx.message.mentions[0].id
+        member_to_verify = await ctx.guild.fetch_member(member_to_verify_id)
+        if member_to_verify is None:
+            return await ctx.send('Could not find that user')
+
+        if verify_role in member_to_verify.roles:
+            await ctx.send('Member is already verified')
+            return
+
+        verify_member(ctx.message.author, member_to_verify)
+        await member_to_verify.add_roles(verify_role)
+        await ctx.send(embed=embeds_for_verify_user(member_to_verify, ctx.message.author))
 
 @client.command()
 async def edit_nick(ctx):
