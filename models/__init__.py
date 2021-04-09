@@ -72,6 +72,17 @@ class DiscordServerSettings(BaseModel):
             return None
         return self.special_channels[key]
 
+    def get_verification_role_by_role_id(self, role_id: Union[str, int]) -> Union['DiscordVerificationRole', None]:
+        if isinstance(role_id, int):
+            role_id = str(role_id)
+
+        verification_roles_with_matching_role_id = list(
+            filter(lambda x: x.discord_role_id == role_id, self.verification_roles)
+        )
+        if len(verification_roles_with_matching_role_id) == 0:
+            return None
+        return verification_roles_with_matching_role_id[0]
+
     def get_special_role(self, key: SpecialRoleEnum) -> Union[None, str]:
         if self.special_roles is None:
             return None
@@ -83,7 +94,8 @@ class DiscordServerSettings(BaseModel):
         :param member:
         :return:
         """
-        roles_allowed_to_verify = [int(verification_role.discord_role_id) for verification_role in self.verification_roles]
+        roles_allowed_to_verify = [int(verification_role.discord_role_id) for verification_role in
+                                   self.verification_roles]
 
         user_roles_list = [role.id for role in member.roles]
 
@@ -121,9 +133,13 @@ class DiscordUserNote(BaseModel):
 
 
 class DiscordVerificationRole(BaseModel):
-    id: str
     discord_role_id: Union[DiscordRole, str] = Field(alias='discordRoleId')
     max_per_day: int = Field(alias='maxPerDay')
+
+
+class DiscordOnlineStreamTimeLog(BaseModel):
+    member_id: str = Field(alias='memberId')
+    status: bool
 
 
 class User(BaseModel):

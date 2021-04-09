@@ -1,11 +1,13 @@
 import datetime
+from typing import Union
+
 import discord
 import requests
 import json
 
 from api import model_api_service
 from environment import get_env
-from models import DiscordServerSettings, Pagination, DiscordUser, WebhookSubscription
+from models import DiscordServerSettings, Pagination, DiscordUser, WebhookSubscription, DiscordOnlineStreamTimeLog
 
 cached_get_user_api_id_by_discord_id = {}
 
@@ -102,6 +104,13 @@ def new_user_time_log(user_time_log, status):
     return time_log
 
 
+def add_discord_time_log_by_member(member: discord.Member, status: bool):
+    model_api_service.create_one(DiscordOnlineStreamTimeLog.construct(
+        member_id=str(member.id),
+        status=status,
+    ))
+
+
 def add_discord_time_log(user_add_time_log, status):
     if get_user_api_id_by_discord_id(user_add_time_log) is not None:
         resp = requests.post(f'{get_env().API_BASE_URL}/api/model/DiscordOnlineTimeLog',
@@ -153,7 +162,10 @@ def verify_member(from_member: discord.Member, to_member: discord.Member):
     })
 
 
-def get_total_verifications_in_last_24_hours(user_discord_id):
+def get_total_verifications_in_last_24_hours(user_discord_id: Union[str, int]):
+    if isinstance(user_discord_id, str):
+        user_discord_id = str(user_discord_id)
+
     member = {'memberId': user_discord_id}
     right_now = datetime.datetime.utcnow()
     a_day_ago = right_now - datetime.timedelta(hours=24)

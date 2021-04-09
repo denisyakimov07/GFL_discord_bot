@@ -12,8 +12,7 @@ from discord_embeds import embeds_for_verify_user, join_embed, left_embed, switc
 from discord_helper_utils import get_channel_by_special_channel
 from discord_server_settings_service import discord_server_settings_service
 from environment import get_env
-from esport_api import create_discord_user_api, add_discord_time_log, add_discord_stream_time_log, \
-    verify_member
+from esport_api import verify_member, add_discord_time_log_by_member
 from models import SpecialChannelEnum, SpecialRoleEnum
 
 http_server.start_server_thread()
@@ -138,61 +137,46 @@ async def on_raw_reaction_remove(payload):
 
 
 @client.command()
-async def clear(ctx, amount=0):
-    if ctx.author.id == 339287982320254976:
-        await ctx.channel.purge(limit=amount + 1)
+@commands.has_permissions(manage_channels=True)
+async def clear(ctx: discord.ext.commands.Context, amount=0):
+    await ctx.channel.purge(limit=amount + 1)
 
 
 """Log system"""
-GUILD = 696277112600133633
-CHANNELS_LOG = 818756453778063380  # auditlog-voice
-SERVER_LOG = 818756528176627743  # auditlog-join-log
-STREAM_LOG = 819783521907638344  # auditlog-event
-ROLES_LOG = 818756406496067604  # auditlog-roles
-MESSAGE_LOG = 818756504245108757  # auditlog-messages
 
 
 @client.event
 async def on_voice_state_update(member, before, after):
-    guild = client.get_guild(GUILD)
-    voice_channel = guild.get_channel(CHANNELS_LOG)
-    stream_channel = guild.get_channel(STREAM_LOG)
+    server_settings = discord_server_settings_service.server_settings[str(member.guild.id)]
+    audit_log_event_channel = get_channel_by_special_channel(member.guild, SpecialChannelEnum.audit_log_event)
 
-    if member.guild.id == GUILD:
-        new_user = {"memberName": f"{member}",
-                    "memberId": f"{member.id}",
-                    "avatarUrl": f"{member.avatar_url}"
-                    }
-
+    if server_settings is not None:
         """auditlog-voice"""
         if not before.channel:
-            await voice_channel.send(embed=join_embed(member, after))
-
-            """ADD user to API DB"""
-            create_discord_user_api(new_user)
-            add_discord_time_log(new_user, status=True)
+            await audit_log_event_channel.send(embed=join_embed(member, after))
+            add_discord_time_log_by_member(member, True)
 
         if before.channel and not after.channel:
-            await voice_channel.send(embed=left_embed(member))
+            await audit_log_event_channel.send(embed=left_embed(member))
 
             """API"""
-            add_discord_time_log(new_user, status=False)
+            add_discord_time_log_by_member(member, False)
 
         if before.channel and after.channel and before.channel != after.channel:
-            await voice_channel.send(embed=switch_embed_embed(member, after))
+            await audit_log_event_channel.send(embed=switch_embed_embed(member, after))
 
             """auditlog-event"""
         if not before.self_stream and after.self_stream:
-            await stream_channel.send(embed=start_stream_embed(member, after))
+            await audit_log_event_channel.send(embed=start_stream_embed(member, after))
 
             """API"""
-            add_discord_stream_time_log(new_user, status=True)
+            add_discord_time_log_by_member(member, True)
 
         if before.self_stream and not after.self_stream or not after.channel and after.self_stream:
-            await stream_channel.send(embed=stop_stream_embed(member, before))
+            await audit_log_event_channel.send(embed=stop_stream_embed(member, before))
 
             """API"""
-            add_discord_stream_time_log(new_user, status=False)
+            add_discord_time_log_by_member(member, False)
 
 
 @client.command()
