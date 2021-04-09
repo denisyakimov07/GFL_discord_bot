@@ -35,5 +35,10 @@ class __DiscordServerSettingsService():
     def has_guild(self, guild_id: Union[str, int]):
         return str(guild_id) in self.server_settings
 
+    def get_settings_by_guild_id(self, guild_id: Union[str, int]) -> Union[None, DiscordServerSettings]:
+        if isinstance(guild_id, int):
+            guild_id = str(guild_id)
+        return self.server_settings[guild_id]
+
 
 discord_server_settings_service = __DiscordServerSettingsService()

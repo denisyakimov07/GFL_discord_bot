@@ -9,7 +9,7 @@ from apex_api import get_apex_rank
 from discord_embeds import embeds_for_verify_user, join_embed, left_embed, switch_embed_embed, start_stream_embed, \
     stop_stream_embed, on_member_join_to_server_embed, new_user_to_verify_embed, left_server_embed, user_add_role_embed, \
     user_remove_role_embed
-from discord_helper_utils import get_channel_by_special_channel
+from discord_helper_utils import get_channel_by_special_channel, try_to_verify_member
 from discord_server_settings_service import discord_server_settings_service
 from environment import get_env
 from esport_api import verify_member, add_discord_time_log_by_member
@@ -89,30 +89,18 @@ roles_assignment_setup = {"massage_id": 828861933280428043,
 async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
     guild = client.get_guild(payload.guild_id)
     verify_channel = get_channel_by_special_channel(guild, SpecialChannelEnum.verify)
-    if payload.channel_id == verify_channel.id and str(payload.emoji.name) == '✅' and client.user.id != payload.user_id:
-        server_settings = discord_server_settings_service.server_settings[str(payload.guild_id)]
-        if server_settings.can_member_verify(payload.member):
-            message = await verify_channel.fetch_message(payload.message_id)
-            # TODO: Check how many members they have verified in the last 24 hours
-            member_to_verify: discord.Member = await guild.fetch_member(int(message.embeds[0].title))
-            verify_role_id = server_settings.get_special_role(SpecialRoleEnum.verify)
-            if verify_role_id is None:
-                print(f'No verify role has been set in the Management Portal')
-                return
-            verify_role = discord.utils.get(guild.roles, id=int(verify_role_id))
-            if verify_role is None:
-                print(f'SpecialRole \'verify\' is invalid. It may have been deleted')
-                return
 
-            verify_member(payload.member, member_to_verify)
-            await member_to_verify.add_roles(verify_role)
+    if payload.channel_id == verify_channel.id and str(payload.emoji.name) == '✅' and client.user.id != payload.user_id:
+        message = await verify_channel.fetch_message(payload.message_id)
+        member_to_verify: discord.Member = await guild.fetch_member(int(message.embeds[0].title))
+        error_msg_or_success = await try_to_verify_member(payload.channel_id, payload.member, member_to_verify)
+        if error_msg_or_success is True:
             await message.delete()
             await verify_channel.send(embed=embeds_for_verify_user(member_to_verify, payload.member))
-        else:
-            await verify_channel.send('You do not have permission to verify members')
-        return
+        elif isinstance(error_msg_or_success, str):
+            await verify_channel.send(error_msg_or_success)
 
-    if payload.message_id == roles_assignment_setup['massage_id']:
+    elif payload.message_id == roles_assignment_setup['massage_id']:
         try:
             if payload.emoji.name in roles_assignment_setup["emoji_to_role"]:
                 member_add_role = payload.member
@@ -227,22 +215,16 @@ async def verify(ctx: discord.ext.commands.Context, user_name=None):
         if len(ctx.message.mentions) == 0:
             return await ctx.send("You didn't mention anyone. Try !verify @{MEMBER}")
 
-        verify_role_id = server_settings.get_special_role(SpecialRoleEnum.verify)
-        verify_role = discord.utils.get(ctx.guild.roles, id=int(verify_role_id))
-        if verify_role is None:
-            print(f'No verification role set for guild. id={ctx.guild.id} name={ctx.guild.name}')
-            return
         member_to_verify_id = ctx.message.mentions[0].id
         member_to_verify = await ctx.guild.fetch_member(member_to_verify_id)
         if member_to_verify is None:
             return await ctx.send('Could not find that user')
 
-        if verify_role in member_to_verify.roles:
-            return await ctx.send('Member is already verified')
-
-        verify_member(ctx.message.author, member_to_verify)
-        await member_to_verify.add_roles(verify_role)
-        await ctx.send(embed=embeds_for_verify_user(member_to_verify, ctx.message.author))
+        error_msg_or_success = await try_to_verify_member(ctx.channel.id, ctx.message.author, member_to_verify)
+        if error_msg_or_success is True:
+            await ctx.send(embed=embeds_for_verify_user(member_to_verify, ctx.message.author))
+        elif isinstance(error_msg_or_success, str):
+            await ctx.send(error_msg_or_success)
 
 
 @client.command()
