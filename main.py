@@ -281,6 +281,7 @@ async def verify(ctx: discord.ext.commands.Context, user_name=None):
         await member_to_verify.add_roles(verify_role)
         await ctx.send(embed=embeds_for_verify_user(member_to_verify, ctx.message.author))
 
+
 @client.command()
 async def edit_nick(ctx):
     if ctx.author.id == 339287982320254976:
