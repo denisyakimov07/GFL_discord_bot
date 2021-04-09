@@ -253,8 +253,6 @@ async def verify(ctx: discord.ext.commands.Context, user_name=None):
         return
 
     if str(ctx.channel.id) == verify_channel_id:
-        author = ctx.message.author
-
         if not server_settings.can_member_verify(ctx.message.author):
             await ctx.send('No permission to verify users')
             return
