@@ -153,17 +153,6 @@ def verify_member(from_member: discord.Member, to_member: discord.Member):
     })
 
 
-def verified_by_member(new_user, admin_user):
-    try:
-        user_verified_by = {"verifiedBy": f"{get_user_api_id_by_discord_id(admin_user)}"}
-        resp = requests.put(f'{get_env().API_BASE_URL}/api/model/DiscordUser/{get_user_api_id_by_discord_id(new_user)}',
-                            headers=model_api_service.get_headers(),
-                            json=user_verified_by)
-        print(f"User get verified {new_user} by {admin_user}---{resp}")
-    except Exception as ex:
-        print(ex)
-
-
 def get_total_verifications_in_last_24_hours(user_discord_id):
     member = {'memberId': user_discord_id}
     right_now = datetime.datetime.utcnow()

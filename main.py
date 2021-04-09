@@ -12,7 +12,7 @@ from discord_embeds import embeds_for_verify_user, join_embed, left_embed, switc
 from discord_helper_utils import get_channel_by_special_channel
 from discord_server_settings_service import discord_server_settings_service
 from environment import get_env
-from esport_api import create_discord_user_api, add_discord_time_log, add_discord_stream_time_log, verified_by_member, \
+from esport_api import create_discord_user_api, add_discord_time_log, add_discord_stream_time_log, \
     verify_member
 from models import SpecialChannelEnum, SpecialRoleEnum
 
@@ -254,12 +254,10 @@ async def verify(ctx: discord.ext.commands.Context, user_name=None):
 
     if str(ctx.channel.id) == verify_channel_id:
         if not server_settings.can_member_verify(ctx.message.author):
-            await ctx.send('No permission to verify users')
-            return
+            return await ctx.send('No permission to verify users')
 
         if len(ctx.message.mentions) == 0:
-            await ctx.send("You didn't mention anyone. Try !verify @{MEMBER}")
-            return
+            return await ctx.send("You didn't mention anyone. Try !verify @{MEMBER}")
 
         verify_role_id = server_settings.get_special_role(SpecialRoleEnum.verify)
         verify_role = discord.utils.get(ctx.guild.roles, id=int(verify_role_id))
@@ -272,8 +270,7 @@ async def verify(ctx: discord.ext.commands.Context, user_name=None):
             return await ctx.send('Could not find that user')
 
         if verify_role in member_to_verify.roles:
-            await ctx.send('Member is already verified')
-            return
+            return await ctx.send('Member is already verified')
 
         verify_member(ctx.message.author, member_to_verify)
         await member_to_verify.add_roles(verify_role)
