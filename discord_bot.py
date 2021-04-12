@@ -286,4 +286,5 @@ async def to_embed(ctx: discord.ext.commands.Context):
 
 
 def start_discord_bot():
+    print('Starting Discord Bot');
     client.run(get_env().DISCORD_BOT_TOKEN)
