@@ -28,7 +28,7 @@ tzinfo = datetime.timezone(datetime.timedelta(hours=timezone_offset))
 
 @client.event
 async def on_ready():
-    print('ready-v0.04.3')
+    print(f'[Discord Client] Logged in as {client.user.name}')
 
 
 @client.event

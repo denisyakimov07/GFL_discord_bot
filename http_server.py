@@ -1,12 +1,17 @@
+import threading
+
 from flask import Flask, request
 from waitress import serve
 
+from discord_bot import start_discord_bot
 from discord_server_settings_service import discord_server_settings_service
 from environment import get_env
-import threading
 
 from esport_api import check_webhook_subscriptions
 from models import DiscordServerSettings
+
+discord_bot_thread = threading.Thread(target=start_discord_bot, args=())
+discord_bot_thread.start()
 
 app = Flask(__name__)
 
