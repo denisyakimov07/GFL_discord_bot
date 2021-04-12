@@ -4,7 +4,7 @@ import ast
 import discord
 from discord.ext import commands
 
-import http_server
+from http_server import start_server_thread, app
 from apex_api import get_apex_rank
 from discord_embeds import embeds_for_verify_user, join_embed, left_embed, switch_embed_embed, start_stream_embed, \
     stop_stream_embed, on_member_join_to_server_embed, new_user_to_verify_embed, left_server_embed, user_add_role_embed, \
@@ -15,7 +15,7 @@ from environment import get_env
 from esport_api import verify_member, add_discord_time_log_by_member
 from models import SpecialChannelEnum, SpecialRoleEnum
 
-http_server.start_server_thread()
+start_server_thread()
 
 intents = discord.Intents.default()
 intents.members = True
