@@ -295,6 +295,7 @@ def start_bot():
 
 
 if __name__ == '__main__':
-    api_server_thread = threading.Thread(target=start_bot, args=())
+    discord_bot_thread = threading.Thread(target=start_bot, args=())
+    discord_bot_thread.start()
 
 start_server_thread()
