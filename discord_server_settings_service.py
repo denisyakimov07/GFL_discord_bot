@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Union
 
 import discord
 
@@ -15,6 +15,7 @@ class __DiscordServerSettingsService():
         self.server_settings = {}
         all_server_settings = get_all_discord_server_settings()
         for server_settings in all_server_settings.data:
+            print('[DiscordServerSettingsService] Adding server settings', server_settings)
             self.server_settings[server_settings.guild_id] = server_settings
 
     def refresh_by_guild(self, guild: discord.Guild):
@@ -30,6 +31,14 @@ class __DiscordServerSettingsService():
         """
         server_settings = get_discord_server_settings(discord_server_settings_id)
         self.server_settings[server_settings.guild_id] = server_settings
+
+    def has_guild(self, guild_id: Union[str, int]):
+        return str(guild_id) in self.server_settings
+
+    def get_settings_by_guild_id(self, guild_id: Union[str, int]) -> Union[None, DiscordServerSettings]:
+        if isinstance(guild_id, int):
+            guild_id = str(guild_id)
+        return self.server_settings[guild_id]
 
 
 discord_server_settings_service = __DiscordServerSettingsService()

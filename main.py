@@ -1,23 +1,21 @@
+import datetime
 import ast
-
 
 import discord
 from discord.ext import commands
 
-import datetime
-
+import http_server
+from apex_api import get_apex_rank
 from discord_embeds import embeds_for_verify_user, join_embed, left_embed, switch_embed_embed, start_stream_embed, \
     stop_stream_embed, on_member_join_to_server_embed, new_user_to_verify_embed, left_server_embed, user_add_role_embed, \
     user_remove_role_embed
+from discord_helper_utils import get_channel_by_special_channel, try_to_verify_member
 from discord_server_settings_service import discord_server_settings_service
 from environment import get_env
-from esport_api import create_discord_user_api, add_discord_time_log, add_discord_stream_time_log, \
-    get_or_create_discord_server_settings, check_webhook_subscriptions, verified_by_member
-from apex_api import get_apex_rank
-from models import DiscordServerSettings
-import api
+from esport_api import verify_member, add_discord_time_log_by_member
+from models import SpecialChannelEnum, SpecialRoleEnum
 
-api.start_server_thread()
+http_server.start_server_thread()
 
 intents = discord.Intents.default()
 intents.members = True
@@ -49,51 +47,29 @@ async def on_guild_join(guild: discord.Guild):
 
 @client.event
 async def on_member_remove(member):
-    if member.guild.id == GUILD:
-        guild = client.get_guild(GUILD)
-        channel = guild.get_channel(SERVER_LOG)
+    channel = get_channel_by_special_channel(member.guild, SpecialChannelEnum.audit_log_join)
+    if channel is not None:
         await channel.send(embed=left_server_embed(member))
 
 
 """Server verify"""
-VERIFICATION_CHANNEL_ID = [709285744794927125, 819347673575456769]  # Discord TPG (verify-a-friend) 709285744794927125
 
 
 @client.event
-async def on_member_join(member):
-    if member.guild.id == GUILD:
-        new_user = {"memberName": f"{member}",
-                    "memberId": f"{member.id}",
-                    "avatarUrl": f"{member.avatar_url}"
-                    }
-        guild = client.get_guild(GUILD)
-        channel = guild.get_channel(SERVER_LOG)
-        verify_channel = guild.get_channel(709285744794927125)
-        """ADD user to API DB"""
-        create_discord_user_api(new_user)
-        await channel.send(embed=on_member_join_to_server_embed(member))
-        msg = await verify_channel.send(embed=new_user_to_verify_embed(member))
-        await msg.add_reaction("✅")
+async def on_member_join(member: discord.Member):
+    server_log_channel = get_channel_by_special_channel(member.guild, SpecialChannelEnum.audit_log_join)
+    if server_log_channel is not None:
+        await server_log_channel.send(embed=on_member_join_to_server_embed(member))
+
+    verify_channel = get_channel_by_special_channel(member.guild, SpecialChannelEnum.verify)
+    if verify_channel is not None:
+        message = await verify_channel.send(embed=new_user_to_verify_embed(member))
+        await message.add_reaction("✅")
 
 
 """Server role manager"""
 
 # Verification new users
-ROLE_ALLOWED_TO_VERIFY_ID = [
-    818901497244024842,  # Member
-    722195472411787455,  # Coach
-    703688573978804224,  # Staff
-    709595149419675689,  # Director
-    812537908736819280,  # Admin
-    696277516020875324  # Owner
-]
-BOT_ID = 786029312788791346
-VERIFY_ROLE_ID = 703686185968599111
-
-settings = {"ROLE_ALLOWED_TO_VERIFY_ID": [818901497244024842, 722195472411787455, ],
-            "BOT_ID": 696277516020875324,
-            "VERIFY_ROLE_ID": 703686185968599111
-            }
 
 roles_assignment_setup = {"massage_id": 828861933280428043,
                           "emoji_to_role": {"Apex": 818814719854116914,
@@ -110,31 +86,21 @@ roles_assignment_setup = {"massage_id": 828861933280428043,
 
 
 @client.event
-async def on_raw_reaction_add(payload):
-    if payload.channel_id in VERIFICATION_CHANNEL_ID and str(payload.emoji.name) == "✅" and int(
-            payload.user_id) != BOT_ID:
-        msg = await client.get_channel(payload.channel_id).fetch_message(payload.message_id)
-        if msg.author.id == BOT_ID:
-            new_user_id = msg.embeds[0].title
-            member = payload.member
-            user_roles_list = [role.id for role in member.roles]
-            intersection_roles = set(user_roles_list) & set(ROLE_ALLOWED_TO_VERIFY_ID)
-            if len(intersection_roles) > 0:
-                guild = client.get_guild(GUILD)
-                new_user = await guild.fetch_member(int(new_user_id))
-                role = discord.utils.get(member.guild.roles, id=VERIFY_ROLE_ID)
-                await new_user.add_roles(role)
-                await msg.delete()
-                channel_id = payload.channel_id
-                channel = client.get_channel(channel_id)
-                await channel.send(embed=embeds_for_verify_user(new_user, member))
+async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
+    guild = client.get_guild(payload.guild_id)
+    verify_channel = get_channel_by_special_channel(guild, SpecialChannelEnum.verify)
 
-                """API"""
-                new_user = {"memberId": f"{new_user.id}"}
-                admin_member = {"memberId": f"{member.id}"}
-                verified_by_member(new_user, admin_member)
+    if payload.channel_id == verify_channel.id and str(payload.emoji.name) == '✅' and client.user.id != payload.user_id:
+        message = await verify_channel.fetch_message(payload.message_id)
+        member_to_verify: discord.Member = await guild.fetch_member(int(message.embeds[0].title))
+        error_msg_or_success = await try_to_verify_member(payload.channel_id, payload.member, member_to_verify)
+        if error_msg_or_success is True:
+            await message.delete()
+            await verify_channel.send(embed=embeds_for_verify_user(member_to_verify, payload.member))
+        elif isinstance(error_msg_or_success, str):
+            await verify_channel.send(error_msg_or_success)
 
-    if payload.message_id == roles_assignment_setup['massage_id']:
+    elif payload.message_id == roles_assignment_setup['massage_id']:
         try:
             if payload.emoji.name in roles_assignment_setup["emoji_to_role"]:
                 member_add_role = payload.member
@@ -159,61 +125,46 @@ async def on_raw_reaction_remove(payload):
 
 
 @client.command()
-async def clear(ctx, amount=0):
-    if ctx.author.id == 339287982320254976:
-        await ctx.channel.purge(limit=amount + 1)
+@commands.has_permissions(manage_channels=True)
+async def clear(ctx: discord.ext.commands.Context, amount=0):
+    await ctx.channel.purge(limit=amount + 1)
 
 
 """Log system"""
-GUILD = 696277112600133633
-CHANNELS_LOG = 818756453778063380  # auditlog-voice
-SERVER_LOG = 818756528176627743  # auditlog-join-log
-STREAM_LOG = 819783521907638344  # auditlog-event
-ROLES_LOG = 818756406496067604  # auditlog-roles
-MESSAGE_LOG = 818756504245108757  # auditlog-messages
 
 
 @client.event
 async def on_voice_state_update(member, before, after):
-    guild = client.get_guild(GUILD)
-    voice_channel = guild.get_channel(CHANNELS_LOG)
-    stream_channel = guild.get_channel(STREAM_LOG)
+    server_settings = discord_server_settings_service.server_settings[str(member.guild.id)]
+    audit_log_event_channel = get_channel_by_special_channel(member.guild, SpecialChannelEnum.audit_log_event)
 
-    if member.guild.id == GUILD:
-        new_user = {"memberName": f"{member}",
-                    "memberId": f"{member.id}",
-                    "avatarUrl": f"{member.avatar_url}"
-                    }
-
+    if server_settings is not None:
         """auditlog-voice"""
         if not before.channel:
-            await voice_channel.send(embed=join_embed(member, after))
-
-            """ADD user to API DB"""
-            create_discord_user_api(new_user)
-            add_discord_time_log(new_user, status=True)
+            await audit_log_event_channel.send(embed=join_embed(member, after))
+            add_discord_time_log_by_member(member, True)
 
         if before.channel and not after.channel:
-            await voice_channel.send(embed=left_embed(member))
+            await audit_log_event_channel.send(embed=left_embed(member))
 
             """API"""
-            add_discord_time_log(new_user, status=False)
+            add_discord_time_log_by_member(member, False)
 
         if before.channel and after.channel and before.channel != after.channel:
-            await voice_channel.send(embed=switch_embed_embed(member, after))
+            await audit_log_event_channel.send(embed=switch_embed_embed(member, after))
 
             """auditlog-event"""
         if not before.self_stream and after.self_stream:
-            await stream_channel.send(embed=start_stream_embed(member, after))
+            await audit_log_event_channel.send(embed=start_stream_embed(member, after))
 
             """API"""
-            add_discord_stream_time_log(new_user, status=True)
+            add_discord_time_log_by_member(member, True)
 
         if before.self_stream and not after.self_stream or not after.channel and after.self_stream:
-            await stream_channel.send(embed=stop_stream_embed(member, before))
+            await audit_log_event_channel.send(embed=stop_stream_embed(member, before))
 
             """API"""
-            add_discord_stream_time_log(new_user, status=False)
+            add_discord_time_log_by_member(member, False)
 
 
 @client.command()
@@ -250,32 +201,30 @@ async def rank(ctx, user_name=None):
 
 
 @client.command()
-async def verify(ctx, user_name=None):
-    if int(ctx.channel.id) in VERIFICATION_CHANNEL_ID:
-        author = ctx.message.author
-        user_roles_list = [role.id for role in author.roles]
-        intersection_roles = set(user_roles_list) & set(ROLE_ALLOWED_TO_VERIFY_ID)
-        member = None
-        if len(intersection_roles) > 0:
-            try:
-                member = discord.utils.get(client.get_all_members(), name=user_name.split("#")[0],
-                                           discriminator=user_name.split("#")[1])
-            except Exception as ex:
-                print(ex)
-                await ctx.send("Can't fine User")
-            if len(member.roles) == 1:
-                role = discord.utils.get(member.guild.roles, id=VERIFY_ROLE_ID)
-                await member.add_roles(role)
-                await ctx.send(embed=embeds_for_verify_user(member, author))
+async def verify(ctx: discord.ext.commands.Context, user_name=None):
+    server_settings = discord_server_settings_service.server_settings[str(ctx.guild.id)]
+    verify_channel_id = server_settings.get_special_channel(SpecialChannelEnum.verify)
+    if verify_channel_id is None:
+        # TODO: Maybe warn user that the special channel isn't set?
+        return
 
-                """API"""
-                new_user = {"memberId": f"{member.id}"}
-                admin_member = {"memberId": f"{member.id}"}
-                verified_by_member(new_user, admin_member)
-            else:
-                await ctx.send('User already verified')
-        else:
-            await ctx.send('No permission to verify users')
+    if str(ctx.channel.id) == verify_channel_id:
+        if not server_settings.can_member_verify(ctx.message.author):
+            return await ctx.send('No permission to verify users')
+
+        if len(ctx.message.mentions) == 0:
+            return await ctx.send("You didn't mention anyone. Try !verify @{MEMBER}")
+
+        member_to_verify_id = ctx.message.mentions[0].id
+        member_to_verify = await ctx.guild.fetch_member(member_to_verify_id)
+        if member_to_verify is None:
+            return await ctx.send('Could not find that user')
+
+        error_msg_or_success = await try_to_verify_member(ctx.channel.id, ctx.message.author, member_to_verify)
+        if error_msg_or_success is True:
+            await ctx.send(embed=embeds_for_verify_user(member_to_verify, ctx.message.author))
+        elif isinstance(error_msg_or_success, str):
+            await ctx.send(error_msg_or_success)
 
 
 @client.command()
@@ -311,8 +260,14 @@ async def edit_nick(ctx):
 
 @client.event
 async def on_member_update(before: discord.Member, after: discord.Member):
-    guild = client.get_guild(GUILD)
-    role_log_channel = guild.get_channel(ROLES_LOG)
+    server_settings = discord_server_settings_service.server_settings[str(after.guild.id)]
+    guild = client.get_guild(int(server_settings.guild_id))
+    channel_id = server_settings.get_special_channel(SpecialChannelEnum.audit_log_roles)
+    if channel_id is None:
+        # TODO: Maybe warn the user that the special channel isn't set?
+        return
+
+    role_log_channel = guild.get_channel(int(channel_id))
     if before.roles != after.roles:
         roles_before = [role.name for role in before.roles]
         roles_after = [role.name for role in after.roles]

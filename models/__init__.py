@@ -2,6 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional, Union, List, TypeVar, Generic, Any
 
+import discord
 from pydantic import BaseModel as BaseModelPydantic, Field
 from pydantic.generics import GenericModel
 
@@ -23,6 +24,21 @@ class ModelOperationEnum(str, Enum):
     find_many = 'findMany'
 
 
+class SpecialChannelEnum(str, Enum):
+    audit_log_join = 'auditlogjoin',
+    audit_log_voice = 'auditlogvoice',
+    audit_log_event = 'auditlogevent',
+    audit_log_roles = 'auditlogroles',
+    audit_log_messages = 'auditlogmessages',
+    audit_log_bans = 'auditlogbans',
+    audit_log_admin = 'auditlogadmin',
+    verify = 'verify',
+
+
+class SpecialRoleEnum(str, Enum):
+    verify = 'verify',
+
+
 class Client(BaseModel):
     name: str
     redirect_uris: Optional[str] = Field(alias='redirectUris')
@@ -42,9 +58,49 @@ class DiscordRole(BaseModel):
 class DiscordServerSettings(BaseModel):
     guild_id: str = Field(alias='guildId')
     name: str
-    verification_roles: Union[List['DiscordVerificationRole'], List[str]] = Field(alias='verificationRoles')
-    roles: Union[List[str], List[DiscordRole]]
-    bot_command_channel_id: Optional[str] = Field(alias='botCommandChannelId')
+    verification_roles: Optional[Union[List['DiscordVerificationRole'], List[str]]] = Field(alias='verificationRoles')
+    special_channels: Optional[dict] = Field(alias='specialChannels')
+    special_roles: Optional[dict] = Field(alias='specialRoles')
+
+    def get_special_channel(self, key: SpecialChannelEnum) -> Union[None, str]:
+        """
+        Returns the channel id (str) that was configured in the Management Portal
+        :param key:
+        :return:
+        """
+        if self.special_channels is None:
+            return None
+        return self.special_channels[key]
+
+    def get_verification_role_by_role_id(self, role_id: Union[str, int]) -> Union['DiscordVerificationRole', None]:
+        if isinstance(role_id, int):
+            role_id = str(role_id)
+
+        verification_roles_with_matching_role_id = list(
+            filter(lambda x: x.discord_role_id == role_id, self.verification_roles)
+        )
+        if len(verification_roles_with_matching_role_id) == 0:
+            return None
+        return verification_roles_with_matching_role_id[0]
+
+    def get_special_role(self, key: SpecialRoleEnum) -> Union[None, str]:
+        if self.special_roles is None:
+            return None
+        return self.special_roles[key]
+
+    def can_member_verify(self, member: discord.Member) -> bool:
+        """
+        Checks to see if verification_roles contains a role that the member has
+        :param member:
+        :return:
+        """
+        roles_allowed_to_verify = [int(verification_role.discord_role_id) for verification_role in
+                                   self.verification_roles]
+
+        user_roles_list = [role.id for role in member.roles]
+
+        intersection_roles = set(user_roles_list) & set(roles_allowed_to_verify)
+        return len(intersection_roles) > 0
 
 
 TModel = TypeVar('TModel')
@@ -59,28 +115,31 @@ class Pagination(GenericModel, Generic[TModel]):
 
 class DiscordUser(BaseModel):
     id: str
-    member_name: str = Field(alias='memberName')
-    member_id: str = Field(alias='memberId')
+    member_name: Optional[str] = Field(alias='memberName')
+    member_id: Optional[str] = Field(alias='memberId')
     member_nickname: Optional[str] = Field(alias='memberNickname')
     verified_by_member_id: Optional[str] = Field(alias='verifiedByMemberId')
     verified_at: Optional[datetime] = Field(alias='verifiedAt')
     avatar_url: Optional[str] = Field(alias='avatarUrl')
-    coins: float
-    notes: Union['DiscordUserNote', List[str]]
+    notes: Optional[Union[List['DiscordUserNote'], List[str]]]
 
 
 class DiscordUserNote(BaseModel):
-    discord_user: Union['DiscordUser', str] = Field(alias='discordUser')
-    text: str
+    discord_user: Optional[Union['DiscordUser', str]] = Field(alias='discordUser')
+    text: Optional[str]
 
     by_user: Optional[Union['User', str]] = Field(alias='byUser')
     by_discord_user: Optional[Union['DiscordUser', str]] = Field(alias='byDiscordUser')
 
 
 class DiscordVerificationRole(BaseModel):
-    id: str
-    discord_role: Union[DiscordRole, str] = Field(alias='discordRole')
+    discord_role_id: Union[DiscordRole, str] = Field(alias='discordRoleId')
     max_per_day: int = Field(alias='maxPerDay')
+
+
+class DiscordOnlineStreamTimeLog(BaseModel):
+    member_id: str = Field(alias='memberId')
+    status: bool
 
 
 class User(BaseModel):
@@ -105,7 +164,23 @@ class WebhookSubscription(BaseModel):
     client: Union[Client, str]
     topic: str
     secret: str
-    expiresAt: datetime
+    expires_at: datetime = Field(alias='expiresAt')
+
+
+class DeleteResult(BaseModelPydantic):
+    success: bool
+
+
+class DeleteManyResult(BaseModelPydantic):
+    n: Optional[int]
+    ok: Optional[int]
+    deleted_count: Optional[int] = Field(alias='deleted_count')
+
+
+class UpdateManyResult(BaseModelPydantic):
+    n: Optional[int]
+    n_modified: Optional[int] = Field(alias='nModified')
+    ok: Optional[int]
 
 
 DiscordServerSettings.update_forward_refs()
