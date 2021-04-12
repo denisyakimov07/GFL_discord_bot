@@ -1,5 +1,6 @@
 import datetime
 import ast
+import threading
 
 import discord
 from discord.ext import commands
@@ -12,10 +13,8 @@ from discord_embeds import embeds_for_verify_user, join_embed, left_embed, switc
 from discord_helper_utils import get_channel_by_special_channel, try_to_verify_member
 from discord_server_settings_service import discord_server_settings_service
 from environment import get_env
-from esport_api import verify_member, add_discord_time_log_by_member
-from models import SpecialChannelEnum, SpecialRoleEnum
-
-start_server_thread()
+from esport_api import add_discord_time_log_by_member
+from models import SpecialChannelEnum
 
 intents = discord.Intents.default()
 intents.members = True
@@ -291,6 +290,11 @@ async def to_embed(ctx: discord.ext.commands.Context):
             print(ex)
 
 
-if __name__ == '__main__':
+def start_bot():
     client.run(get_env().DISCORD_BOT_TOKEN)
-    print(f'Logged into Discord as {client.user.name}')
+
+
+if __name__ == '__main__':
+    api_server_thread = threading.Thread(target=start_bot, args=())
+
+start_server_thread()
