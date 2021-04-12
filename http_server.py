@@ -29,5 +29,6 @@ def start_server():
 
 
 def start_server_thread():
-    api_server_thread = threading.Thread(target=start_server, args=())
-    api_server_thread.start()
+    print('Starting server thread')
+    # api_server_thread = threading.Thread(target=start_server, args=())
+    # api_server_thread.start()
