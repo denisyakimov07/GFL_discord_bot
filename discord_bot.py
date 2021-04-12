@@ -288,8 +288,7 @@ async def to_embed(ctx: discord.ext.commands.Context):
             print(ex)
 
 
-def start_discord_bot_thread():
+def start_discord_bot():
     print('Starting Discord Bot')
-    thread = threading.Thread(target=client.run, args=[get_env().DISCORD_BOT_TOKEN])
-    thread.start()
+    client.run(get_env().DISCORD_BOT_TOKEN)
 
