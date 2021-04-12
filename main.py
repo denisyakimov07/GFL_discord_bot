@@ -5,7 +5,6 @@ import threading
 import discord
 from discord.ext import commands
 
-from http_server import start_server_thread, app
 from apex_api import get_apex_rank
 from discord_embeds import embeds_for_verify_user, join_embed, left_embed, switch_embed_embed, start_stream_embed, \
     stop_stream_embed, on_member_join_to_server_embed, new_user_to_verify_embed, left_server_embed, user_add_role_embed, \
@@ -294,6 +293,8 @@ def start_bot():
     print('Initializing Discord Client')
     client.run(get_env().DISCORD_BOT_TOKEN)
 
+
+from http_server import start_server_thread, app
 
 if __name__ == '__main__':
     discord_bot_thread = threading.Thread(target=start_bot, args=())
