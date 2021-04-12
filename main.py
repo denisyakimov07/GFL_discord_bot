@@ -293,3 +293,4 @@ async def to_embed(ctx: discord.ext.commands.Context):
 
 if __name__ == '__main__':
     client.run(get_env().DISCORD_BOT_TOKEN)
+    print(f'Logged into Discord as {client.user.name}')
