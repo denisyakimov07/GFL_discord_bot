@@ -4,7 +4,7 @@ import requests
 
 from environment import get_env
 
-log = logging.getLogger('AccessToken')
+log = logging.getLogger('Access Token')
 
 
 def get_new_access_token():

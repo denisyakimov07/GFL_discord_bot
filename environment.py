@@ -1,3 +1,5 @@
+import logging
+
 from dotenv import load_dotenv
 import os
 
@@ -16,6 +18,7 @@ class _Environment:
     PORT: int
     API_BASE_URL: str
     BASE_URL: str
+    LOG_LEVEL: int
 
     def __init__(self):
         self.DISCORD_BOT_TOKEN = os.getenv('DISCORD_BOT_TOKEN')
@@ -31,6 +34,18 @@ class _Environment:
         self.API_CLIENT_SECRET = os.getenv('API_CLIENT_SECRET')
         self.PORT = int(os.getenv('PORT') or 8082)
         self.BASE_URL = os.getenv('BASE_URL')
+        self.LOG_LEVEL = _Environment.__parse_log_level(os.getenv('LOG_LEVEL'))
+
+    @staticmethod
+    def __parse_log_level(log_level_str: str) -> int:
+        switcher = {
+            'debug': logging.DEBUG,
+            'info': logging.INFO,
+            'warning': logging.WARNING,
+            'error': logging.ERROR,
+            'critical': logging.CRITICAL,
+        }
+        return switcher.get(log_level_str, logging.INFO)
 
     def __str__(self):
         return f'DISCORD_BOT_TOKEN={self.DISCORD_BOT_TOKEN}\nDISCORD_CLIENT_ID={self.DISCORD_CLIENT_ID}'

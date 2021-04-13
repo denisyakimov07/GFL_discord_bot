@@ -7,7 +7,7 @@ from discord_server_settings_service import discord_server_settings_service
 from esport_api import verify_member
 from models import SpecialChannelEnum, SpecialRoleEnum
 
-log = logging.getLogger('discord_helper_utils')
+log = logging.getLogger('Discord Helper Utils')
 
 
 def get_channel_by_special_channel(

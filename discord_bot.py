@@ -15,7 +15,7 @@ from environment import get_env
 from esport_api import add_discord_time_log_by_member
 from models import SpecialChannelEnum
 
-log = logging.getLogger('DiscordBot')
+log = logging.getLogger('Discord Bot')
 
 intents = discord.Intents.default()
 intents.members = True
@@ -34,7 +34,7 @@ tzinfo = datetime.timezone(datetime.timedelta(hours=timezone_offset))
 
 @client.event
 async def on_ready():
-    log.info(f'[Discord Client] Logged in as {client.user.name}')
+    log.info(f'Logged in as {client.user.name}')
 
 
 @client.event
