@@ -1,3 +1,4 @@
+import logging
 from typing import Dict, Union
 
 import discord
@@ -7,6 +8,7 @@ from esport_api import get_all_discord_server_settings, \
     get_or_create_discord_server_settings
 from models import DiscordServerSettings
 
+log = logging.getLogger('DiscordServerSettingsService')
 
 class __DiscordServerSettingsService():
     server_settings: Dict[str, DiscordServerSettings]
@@ -15,7 +17,7 @@ class __DiscordServerSettingsService():
         self.server_settings = {}
         all_server_settings = get_all_discord_server_settings()
         for server_settings in all_server_settings.data:
-            print('[DiscordServerSettingsService] Adding server settings', server_settings)
+            log.debug('Adding server settings', server_settings)
             self.server_settings[server_settings.guild_id] = server_settings
 
     def refresh_by_guild(self, guild: discord.Guild):

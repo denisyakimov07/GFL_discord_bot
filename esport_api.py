@@ -1,4 +1,5 @@
 import datetime
+import logging
 from typing import Union
 
 import discord
@@ -11,6 +12,8 @@ from models import DiscordServerSettings, Pagination, DiscordUser, WebhookSubscr
 
 cached_get_user_api_id_by_discord_id = {}
 
+log = logging.getLogger('API')
+
 
 def get_user_status_by_id_from_api(new_user):
     params = {"q": json.dumps({"memberId": f"{new_user['memberId']}"})}
@@ -20,13 +23,13 @@ def get_user_status_by_id_from_api(new_user):
                                   headers=model_api_service.get_headers(),
                                   params=params)
         if len(check_user.json()["data"]) == 0:
-            print(f"User was no found {new_user}.")
+            log.info(f"User was no found {new_user}.")
             return False
         else:
-            print(f"User was found {new_user}.")
+            log.info(f"User was found {new_user}.")
             return True
     except Exception as ex:
-        print(f"Cant check user {ex}")
+        log.error(f"Cant check user {ex}")
 
 
 def check_webhook_subscriptions():
@@ -46,9 +49,9 @@ def check_webhook_subscriptions():
 
     if request.status_code == 200:
         subscription = WebhookSubscription.parse_raw(request.text)
-        print('Confirmed webhook subscription', subscription)
+        log.info('Confirmed webhook subscription', subscription)
     else:
-        print(f'Failed to confirm webhook subscription: {request.text}')
+        log.error(f'Failed to confirm webhook subscription: {request.text}')
 
 
 def get_all_discord_server_settings() -> Pagination[DiscordServerSettings]:
@@ -88,11 +91,11 @@ def create_discord_user_api(new_user):
         resp = requests.post(f'{get_env().API_BASE_URL}/api/model/DiscordUser', headers=model_api_service.get_headers(),
                              json=new_user)
         if resp.status_code == 200:
-            print(f"New user was create {new_user}.")
+            log.info(f"New user was create {new_user}.")
         else:
-            print(f"New user was not create {resp.status_code} {resp.json()}.")
+            log.error(f"New user was not create {resp.status_code} {resp.json()}.")
     else:
-        print(f"User already exist {new_user}")
+        log.error(f"User already exist {new_user}")
 
 
 def new_user_time_log(user_time_log, status):
@@ -116,9 +119,9 @@ def add_discord_time_log(user_add_time_log, status):
         resp = requests.post(f'{get_env().API_BASE_URL}/api/model/DiscordOnlineTimeLog',
                              headers=model_api_service.get_headers(),
                              json=new_user_time_log(user_add_time_log, status))
-        print(f"DiscordOnlineTimeLog {resp.status_code} {resp.json()}.")
+        log.info(f"DiscordOnlineTimeLog {resp.status_code} {resp.json()}.")
     else:
-        print(f"Time log was not added - {user_add_time_log} - is None")
+        log.error(f"Time log was not added - {user_add_time_log} - is None")
 
 
 def add_discord_stream_time_log(user_stream_log, status):
@@ -126,14 +129,14 @@ def add_discord_stream_time_log(user_stream_log, status):
         resp = requests.post(f'{get_env().API_BASE_URL}/api/model/DiscordOnlineStreamTimeLog',
                              headers=model_api_service.get_headers(),
                              json=new_user_time_log(user_stream_log, status))
-        print(f"DiscordOnlineStreamTimeLog {resp.status_code} {resp.json()}.")
+        log.info(f"DiscordOnlineStreamTimeLog {resp.status_code} {resp.json()}.")
     else:
-        print(f"Stream log was not added - {user_stream_log} - is None")
+        log.error(f"Stream log was not added - {user_stream_log} - is None")
 
 
 def get_user_api_id_by_discord_id(user_discord):
     if str(user_discord['memberId']) in cached_get_user_api_id_by_discord_id:
-        print(
+        log.info(
             f"User_api_id get from cache {user_discord['memberId']} = {cached_get_user_api_id_by_discord_id[user_discord['memberId']]}")
         return cached_get_user_api_id_by_discord_id[user_discord['memberId']]
     else:
@@ -144,13 +147,13 @@ def get_user_api_id_by_discord_id(user_discord):
                                       params=params)
             if len(check_user.json()["data"]) > 0:
                 user_id = check_user.json()["data"][0]["id"]
-                print(f"User found discord id - {user_discord['memberId']}, api_id - {user_id}")
+                log.info(f"User found discord id - {user_discord['memberId']}, api_id - {user_id}")
                 cached_get_user_api_id_by_discord_id[str(user_discord['memberId'])] = str(user_id)
                 return user_id
             else:
-                print(f"User is not found discord id - {user_discord['memberId']}")
+                log.error(f"User is not found discord id - {user_discord['memberId']}")
         except Exception as ex:
-            print(f"Bad request, discord id - {user_discord['memberId']}, Exception {ex}.")
+            log.error(f"Bad request, discord id - {user_discord['memberId']}, Exception {ex}.")
             return
 
 

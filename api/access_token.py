@@ -1,7 +1,10 @@
+import logging
 import time
 import requests
 
 from environment import get_env
+
+log = logging.getLogger('AccessToken')
 
 
 def get_new_access_token():
@@ -15,12 +18,12 @@ def get_new_access_token():
         resp = requests.post(f'{get_env().API_BASE_URL}/oauth/token', json=body)
         new_access_token = resp.json()['accessToken']
         if resp.status_code == 200:
-            print("New token was create")
+            log.info("New token was created")
             return f"Bearer {new_access_token}"
         else:
-            print(f"Failed to create new token{resp.status_code}{resp.json()}")
+            log.fatal(f"Failed to create new token{resp.status_code}{resp.json()}")
     except Exception as ex:
-        print(f"Token (resp) was not create {ex}")
+        log.fatal(f"Token (resp) was not create {ex}")
 
 
 class AccessToken:
@@ -34,12 +37,12 @@ class AccessToken:
     def refresh_token(self):
         self.token = get_new_access_token()
         self.token_gen_time = time.time()  # When token was made
-        print(f"Generate new token token - {self.token}")
+        log.info(f"Generate new token token - {self.token}")
 
     def get_token(self):
         if time.time() > self.token_gen_time + self.TOKEN_TTL:
             # token can be expired.
             self.refresh_token()
-            print(f"Token expire - {self.token}")
-        print(f"Return token - {self.token}")
+            log.info(f"Token expire - {self.token}")
+        log.debug(f"Return token - {self.token}")
         return self.token

@@ -1,10 +1,13 @@
-from typing import Union
+import logging
 
 import discord
 
+from typing import Union
 from discord_server_settings_service import discord_server_settings_service
 from esport_api import verify_member
 from models import SpecialChannelEnum, SpecialRoleEnum
+
+log = logging.getLogger('discord_helper_utils')
 
 
 def get_channel_by_special_channel(
@@ -15,15 +18,15 @@ def get_channel_by_special_channel(
 
     server_settings = discord_server_settings_service.server_settings[str(guild.id)]
     if server_settings is None:
-        print(f'Found no server settings for {for_guild_err}')
+        log.warning(f'Found no server settings for {for_guild_err}')
         return None
     channel_id = server_settings.get_special_channel(special_channel)
     if channel_id is None:
-        print(f'Found no {special_channel} Special Channel for {for_guild_err}')
+        log.log(f'Found no {special_channel} Special Channel for {for_guild_err}')
         return None
     channel = guild.get_channel(int(channel_id))
     if channel is None:
-        print(
+        log.warning(
             f'Incorrect {special_channel} Special Channel for {for_guild_err}.'
             f'channel_id={channel_id} may not exist anymore')
     return channel
@@ -55,7 +58,8 @@ async def try_to_verify_member(
 
     verify_role = discord.utils.get(guild.roles, id=int(verify_role_id))
     if verify_role is None:
-        print(f'SpecialRole \'verify\' is invalid. It may have been deleted. Please reset it in the Management Portal')
+        log.warning(f'SpecialRole \'verify\' is invalid. It may have been deleted.'
+                    f'Please reset it in the Management Portal')
         return False
 
     verify_member(from_member, to_member)

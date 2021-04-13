@@ -1,5 +1,6 @@
 import ast
 import asyncio
+import logging
 import threading
 
 import discord_embeds
@@ -13,6 +14,8 @@ from discord_server_settings_service import discord_server_settings_service
 from environment import get_env
 from esport_api import add_discord_time_log_by_member
 from models import SpecialChannelEnum
+
+log = logging.getLogger('DiscordBot')
 
 intents = discord.Intents.default()
 intents.members = True
@@ -31,7 +34,7 @@ tzinfo = datetime.timezone(datetime.timedelta(hours=timezone_offset))
 
 @client.event
 async def on_ready():
-    print(f'[Discord Client] Logged in as {client.user.name}')
+    log.info(f'[Discord Client] Logged in as {client.user.name}')
 
 
 @client.event
@@ -104,9 +107,9 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
                 role = discord.utils.get(member_add_role.guild.roles,
                                          id=roles_assignment_setup["emoji_to_role"][payload.emoji.name])
                 await member_add_role.add_roles(role)
-                print(f"Role was added {member_add_role} - {role}")
+                log.debug(f"Role was added {member_add_role} - {role}")
         except Exception as ex:
-            print(f"Role was not added - {ex}")
+            log.error(f"Role was not added - {ex}")
 
 
 @client.event
@@ -118,7 +121,7 @@ async def on_raw_reaction_remove(payload):
             role = discord.utils.get(guild.roles,
                                      id=roles_assignment_setup["emoji_to_role"][payload.emoji.name])
             await member_remove_role.remove_roles(role)
-            print(f"Role was removed {member_remove_role} - {role}")
+            log.info(f"Role was removed {member_remove_role} - {role}")
 
 
 @client.command()
@@ -239,16 +242,16 @@ async def edit_nick(ctx):
                 else:
                     nick_name = str(member.nick).replace("]TPG[", "").replace("NS_", "")
 
-                print(f"{member} - {member.nick}")
+                log.debug(f"{member} - {member.nick}")
                 try:
                     await member.edit(nick=f"NS_{nick_name}")
-                    print(f"{member} - {member.nick}---{nick_name}")
-                    print(role_id_list)
+                    log.debug(f"{member} - {member.nick}---{nick_name}")
+                    log.debug(role_id_list)
                     role_id_list = []
                 except Exception as ex:
-                    print(f"can't change {member} - {ex}")
+                    log.error(f"can't change {member} - {ex}")
                     role_id_list = []
-        print(i)
+        log.debug(i)
 
 
 # @client.command(name='twitch')
@@ -285,10 +288,9 @@ async def to_embed(ctx: discord.ext.commands.Context):
             await ctx.send(embed=new_embed)
             await ctx.message.delete()
         except Exception as ex:
-            print(ex)
+            log.error(ex)
 
 
 def start_discord_bot():
-    print('Starting Discord Bot')
+    log.info('Starting Discord Bot')
     client.run(get_env().DISCORD_BOT_TOKEN)
-
