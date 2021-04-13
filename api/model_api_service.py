@@ -287,7 +287,7 @@ class __ModelApiService():
 
     def get_headers(self):
         return {
-            'Authorization': f'{self.accessToken.token}',
+            'Authorization': f'{self.accessToken.get_token()}',
         }
 
     @staticmethod
