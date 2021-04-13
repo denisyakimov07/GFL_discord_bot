@@ -10,6 +10,7 @@ from models import DiscordServerSettings
 
 log = logging.getLogger('DiscordServerSettingsService')
 
+
 class __DiscordServerSettingsService():
     server_settings: Dict[str, DiscordServerSettings]
 

@@ -1,7 +1,5 @@
 import ast
-import asyncio
 import logging
-import threading
 
 import discord_embeds
 import discord
@@ -260,14 +258,11 @@ async def edit_nick(ctx):
 
 @client.event
 async def on_member_update(before: discord.Member, after: discord.Member):
-    server_settings = discord_server_settings_service.server_settings[str(after.guild.id)]
-    guild = client.get_guild(int(server_settings.guild_id))
-    channel_id = server_settings.get_special_channel(SpecialChannelEnum.audit_log_roles)
-    if channel_id is None:
+    role_log_channel = get_channel_by_special_channel(before.guild, SpecialChannelEnum.audit_log_roles)
+    if role_log_channel is None:
         # TODO: Maybe warn the user that the special channel isn't set?
         return
 
-    role_log_channel = guild.get_channel(int(channel_id))
     if before.roles != after.roles:
         roles_before = [role.name for role in before.roles]
         roles_after = [role.name for role in after.roles]
