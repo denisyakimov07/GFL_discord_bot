@@ -84,7 +84,7 @@ def new_user_to_verify_embed(member: discord.Member):
 def user_add_role_embed(member: discord.Member, role):
     embed: discord.Embed = discord.Embed(colour=discord.Colour(0x89ff00),
                                          timestamp=datetime.datetime.now(tzinfo),
-                                         description=f"{member.mention} add role - {role}!")
+                                         description=f"<@!{member.id}> add role - {role}!")
     embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
     return embed
 
@@ -92,6 +92,6 @@ def user_add_role_embed(member: discord.Member, role):
 def user_remove_role_embed(member: discord.Member, role):
     embed: discord.Embed = discord.Embed(colour=discord.Colour(0xff001f),
                                          timestamp=datetime.datetime.now(tzinfo),
-                                         description=f"{member.mention} remove role - {role}!")
+                                         description=f"<@!{member.id}> remove role - {role}!")
     embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
     return embed
