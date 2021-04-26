@@ -29,7 +29,7 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
 
     if payload.channel_id == verify_channel.id and str(payload.emoji.name) == '✅' and client.user.id != payload.user_id:
         message = await verify_channel.fetch_message(payload.message_id)
-        member_to_verify: discord.Member = await guild.fetch_member(int(message.embeds[0].title))
+        member_to_verify: discord.Member = await guild.fetch_member(int(message.embeds[0].footer.text))
         error_msg_or_success = await try_to_verify_member(payload.channel_id, payload.member, member_to_verify)
         if error_msg_or_success is True:
             await message.delete()
