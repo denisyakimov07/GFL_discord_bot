@@ -76,7 +76,7 @@ def new_user_to_verify_embed(member: discord.Member):
     embed: discord.Embed = discord.Embed(colour=discord.Colour(0x89ff00),
                                          timestamp=datetime.datetime.now(tzinfo),
                                          description=f"<@!{member.id}> has joined the server!")
-    embed.set_author(name=f"<@!{member.id}>", icon_url=f"{member.avatar_url}")
+    embed.set_author(name=f"{member.name}", icon_url=f"{member.avatar_url}")
     embed.set_footer(text=f"{member.id}")
     return embed
 
