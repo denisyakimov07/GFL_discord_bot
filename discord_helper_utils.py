@@ -50,7 +50,7 @@ async def try_to_verify_member(
     server_settings = discord_server_settings_service.get_settings_by_guild_id(guild.id)
     # TODO: Check how many members they have verified in the last 24 hours
     if server_settings.can_member_verify(from_member) is not True:
-        return 'You do not have permissions to verify members'
+        return f'<@!{from_member.id}> You do not have permissions to verify members (<@!{to_member.id}>)'
 
     verify_role_id = server_settings.get_special_role(SpecialRoleEnum.verify)
     if verify_role_id is None:
@@ -64,7 +64,7 @@ async def try_to_verify_member(
 
     verify_member(from_member, to_member)
     if verify_role in to_member.roles:
-        return 'User is already verified'
+        return f'User <@!{to_member.id}> is already verified (<@!{from_member.id}>)'
 
     await to_member.add_roles(verify_role)
     return True
