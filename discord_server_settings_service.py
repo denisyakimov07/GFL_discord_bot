@@ -18,7 +18,7 @@ class __DiscordServerSettingsService():
         self.server_settings = {}
         all_server_settings = get_all_discord_server_settings()
         for server_settings in all_server_settings.data:
-            log.debug('Adding server settings', server_settings)
+            log.info('Adding server settings', server_settings)
             self.server_settings[server_settings.guild_id] = server_settings
 
     def refresh_by_guild(self, guild: discord.Guild):

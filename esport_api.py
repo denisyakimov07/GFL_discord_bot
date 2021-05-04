@@ -8,7 +8,8 @@ import json
 
 from api import model_api_service
 from environment import get_env
-from models import DiscordServerSettings, Pagination, DiscordUser, WebhookSubscription, DiscordOnlineStreamTimeLog
+from models import DiscordServerSettings, Pagination, DiscordUser, WebhookSubscription, DiscordOnlineStreamTimeLog, \
+    User, GameEventProof
 
 cached_get_user_api_id_by_discord_id = {}
 
@@ -52,6 +53,15 @@ def check_webhook_subscriptions():
         log.info('Confirmed webhook subscription', subscription)
     else:
         log.error(f'Failed to confirm webhook subscription: {request.text}')
+
+
+def get_user_by_discord_user_id(discord_user_id: str) -> Union[None, User]:
+    return model_api_service.find_one(User, {'discordUser': discord_user_id})
+
+
+def get_user_by_discord_member(member: discord.Member) -> Union[None, User]:
+    discord_user = get_create_discord_user_by_member(member)
+    return get_user_by_discord_user_id(discord_user.id)
 
 
 def get_all_discord_server_settings() -> Pagination[DiscordServerSettings]:
@@ -179,3 +189,7 @@ def get_total_verifications_in_last_24_hours(user_discord_id: Union[str, int]):
                          params=params)
     pagination: Pagination[DiscordUser] = Pagination[DiscordUser].parse_raw(count.text)
     return pagination.total_count
+
+
+def create_proof_by_message(msg: discord.Message):
+    model_api_service.create_one(GameEventProof.construct())

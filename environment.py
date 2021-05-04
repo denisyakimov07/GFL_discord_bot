@@ -19,6 +19,7 @@ class _Environment:
     API_BASE_URL: str
     BASE_URL: str
     LOG_LEVEL: int
+    WEB_BASE_URL: str
 
     def __init__(self):
         self.DISCORD_BOT_TOKEN = os.getenv('DISCORD_BOT_TOKEN')
@@ -35,6 +36,7 @@ class _Environment:
         self.PORT = int(os.getenv('PORT') or 8082)
         self.BASE_URL = os.getenv('BASE_URL')
         self.LOG_LEVEL = _Environment.__parse_log_level(os.getenv('LOG_LEVEL'))
+        self.WEB_BASE_URL = os.getenv('WEB_BASE_URL')
 
     @staticmethod
     def __parse_log_level(log_level_str: str) -> int:

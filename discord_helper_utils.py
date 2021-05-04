@@ -6,6 +6,7 @@ from typing import Union
 from discord_server_settings_service import discord_server_settings_service
 from esport_api import verify_member
 from models import SpecialChannelEnum, SpecialRoleEnum
+from discord_embeds import welcome_message_embed
 
 log = logging.getLogger('Discord Helper Utils')
 
@@ -67,4 +68,9 @@ async def try_to_verify_member(
         return f'User <@!{to_member.id}> is already verified (<@!{from_member.id}>)'
 
     await to_member.add_roles(verify_role)
+
     return True
+
+
+async def send_message_to_verified_user(member: discord.Member):
+    await member.send(embed=welcome_message_embed())

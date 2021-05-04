@@ -4,8 +4,10 @@ venv/
 /.git
 /venv/
 /venv/
-.env
+.env.staging
 env/
+env
 
 node_modules/
 
+/.env

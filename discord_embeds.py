@@ -95,3 +95,28 @@ def user_remove_role_embed(member: discord.Member, role):
                                          description=f"<@!{member.id}> remove role - {role}!")
     embed.set_footer(text="|", icon_url=f"{member.avatar_url}")
     return embed
+
+
+# TODO: Get welcome_message from API, create welcome_message model
+welcome_message = {
+    "title": "title gdfgdfgdfgdfgf",
+    "description": "this supports [named links](https://discordapp.com) "
+                   "on top of the previously shown subset of markdown. ",
+    "url": "https://discordapp.com",
+    "image_url": "https://cdn.discordapp.com/embed/avatars/0.png"
+}
+
+
+def welcome_message_embed():
+    if welcome_message['title'] and welcome_message['url'] and welcome_message['description']:
+        embed: discord.Embed = discord.Embed(title=f"{welcome_message['title']}", colour=discord.Colour(0xf8e71c),
+                                             url=f"{welcome_message['url']}",
+                                             description=f"{welcome_message['description']}",
+                                             timestamp=datetime.datetime.now(tzinfo))
+        if welcome_message['image_url']:
+            embed.set_image(url=welcome_message['image_url'])
+    else:
+        embed: discord.Embed = discord.Embed(colour=discord.Colour(0xf8e71c),
+                                             description=f"Welcome to the server!",
+                                             timestamp=datetime.datetime.now(tzinfo))
+    return embed
