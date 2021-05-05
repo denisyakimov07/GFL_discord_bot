@@ -17,7 +17,7 @@ def get_channel_by_special_channel(
 ) -> Union[discord.TextChannel, discord.VoiceChannel, None]:
     for_guild_err = f'guild id={guild.id} name={guild.name}'
 
-    server_settings = discord_server_settings_service.server_settings[str(guild.id)]
+    server_settings = discord_server_settings_service.server_settings.get(str(guild.id))
     if server_settings is None:
         log.warning(f'Found no server settings for {for_guild_err}')
         return None

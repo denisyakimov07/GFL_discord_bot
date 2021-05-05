@@ -2,7 +2,6 @@ import logging
 import discord
 import discord_embeds
 
-from emojis import emojis
 from discord_client import client
 from discord_helper_utils import get_channel_by_special_channel, try_to_verify_member, send_message_to_verified_user
 from models import SpecialChannelEnum
@@ -27,9 +26,8 @@ roles_assignment_setup = {"massage_id": 828861933280428043,
 async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
     guild = client.get_guild(payload.guild_id)
     verify_channel = get_channel_by_special_channel(guild, SpecialChannelEnum.verify)
-    current_event_channel = get_channel_by_special_channel(guild, SpecialChannelEnum.current_event)
 
-    if payload.channel_id == verify_channel.id and str(payload.emoji.name) == '✅' and client.user.id != payload.user_id:
+    if verify_channel is not None and payload.channel_id == verify_channel.id and str(payload.emoji.name) == '✅' and client.user.id != payload.user_id:
         message = await verify_channel.fetch_message(payload.message_id)
         member_to_verify: discord.Member = await guild.fetch_member(int(message.embeds[0].footer.text))
         error_msg_or_success = await try_to_verify_member(payload.channel_id, payload.member, member_to_verify)

@@ -89,7 +89,7 @@ class DiscordServerSettings(BaseModel):
     def get_special_role(self, key: SpecialRoleEnum) -> Union[None, str]:
         if self.special_roles is None:
             return None
-        return self.special_roles[key]
+        return self.special_roles.get(key)
 
     def can_member_verify(self, member: discord.Member) -> bool:
         """
