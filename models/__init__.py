@@ -122,7 +122,7 @@ class DiscordUser(BaseModel):
     member_name: Optional[str] = Field(alias='memberName')
     member_id: Optional[str] = Field(alias='memberId')
     member_nickname: Optional[str] = Field(alias='memberNickname')
-    verified_by_member_id: Optional[str] = Field(alias='verifiedBy')
+    verified_by_member_id: Union[None, str, 'DiscordUser'] = Field(alias='verifiedBy')
     verified_at: Optional[datetime] = Field(alias='verifiedAt')
     avatar_url: Optional[str] = Field(alias='avatarUrl')
     notes: Optional[Union[List['DiscordUserNote'], List[str]]]
@@ -230,6 +230,8 @@ class GameEventProof(BaseModel):
     url: str
     accepted: Optional[bool]
     acceptedBy: Union[None, User, str]
+    message: Optional[str]
+    rejectionMessage: Optional[str]
 
 
 DiscordServerSettings.update_forward_refs()

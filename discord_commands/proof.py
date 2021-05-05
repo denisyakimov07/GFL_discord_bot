@@ -46,6 +46,6 @@ async def proof(ctx: discord.ext.commands.Context):
             return
 
         model_api_service.create_one(
-            GameEventProof.construct(user=user.id, url=ctx.message.attachments[0].url, event=first_event.id)
+            GameEventProof.construct(user=user.id, url=ctx.message.attachments[0].url, event=first_event.id, message=ctx.message.content)
         )
         await ctx.send('Proof has been submitted for review')
