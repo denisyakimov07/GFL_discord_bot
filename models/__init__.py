@@ -73,7 +73,8 @@ class DiscordServerSettings(BaseModel):
         """
         if self.special_channels is None:
             return None
-        return self.special_channels[key]
+
+        return self.special_channels.get(key)
 
     def get_verification_role_by_role_id(self, role_id: Union[str, int]) -> Union['DiscordVerificationRole', None]:
         if isinstance(role_id, int):
@@ -89,7 +90,7 @@ class DiscordServerSettings(BaseModel):
     def get_special_role(self, key: SpecialRoleEnum) -> Union[None, str]:
         if self.special_roles is None:
             return None
-        return self.special_roles[key]
+        return self.special_roles.get(key)
 
     def can_member_verify(self, member: discord.Member) -> bool:
         """
