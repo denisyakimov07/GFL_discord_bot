@@ -34,7 +34,7 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
         if error_msg_or_success is True:
             await message.delete()
             await verify_channel.send(embed=discord_embeds.embeds_for_verify_user(member_to_verify, payload.member))
-            await send_message_to_verified_user(member_to_verify)
+            # await send_message_to_verified_user(member_to_verify)
         elif isinstance(error_msg_or_success, str):
             await verify_channel.send(error_msg_or_success)
 
