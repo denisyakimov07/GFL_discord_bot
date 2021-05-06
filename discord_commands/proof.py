@@ -6,8 +6,8 @@ from discord.ext import commands
 
 from api import model_api_service
 from discord_client import client
+from discord_embeds import user_need_to_reg_on_site_massage_embed
 from discord_server_settings_service import discord_server_settings_service
-from environment import get_env
 from esport_api import get_user_by_discord_member
 from models import SpecialChannelEnum, GameEventProof, GameEvent
 
@@ -30,12 +30,7 @@ async def proof(ctx: discord.ext.commands.Context):
 
     user = get_user_by_discord_member(ctx.message.author)
     if user is None:
-        await ctx.message.author.send(
-            f'To participate in North Star\'s event, you first must register! Click this link to register via Discord: '
-            f'{get_env().WEB_BASE_URL}/authredirect/discord\n\nAfter clicking the link, you will be redirected to '
-            f'Discord\'s site to authenticate and redirected again to the North Star website.\n\n'
-            f'After registering, please resubmit your proof using the '
-            f'!proof command')
+        await ctx.message.author.send(embed=user_need_to_reg_on_site_massage_embed())
         await ctx.message.delete()
         await ctx.send('You must be a registered user to submit proof. Please check your messages for more details.')
         return

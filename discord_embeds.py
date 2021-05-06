@@ -2,6 +2,8 @@ import datetime
 
 import discord
 
+from environment import get_env
+
 timezone_offset = 8.0  # Pacific Standard Time (UTC−08:00)
 tzinfo = datetime.timezone(datetime.timedelta(hours=timezone_offset))
 
@@ -99,11 +101,11 @@ def user_remove_role_embed(member: discord.Member, role):
 
 # TODO: Get welcome_message from API, create welcome_message model
 welcome_message = {
-    "title": "title gdfgdfgdfgdfgf",
-    "description": "this supports [named links](https://discordapp.com) "
-                   "on top of the previously shown subset of markdown. ",
-    "url": "https://discordapp.com",
-    "image_url": "https://cdn.discordapp.com/embed/avatars/0.png"
+    # "title": "title gdfgdfgdfgdfgf",
+    # "description": "this supports [named links](https://discordapp.com) "
+    #                "on top of the previously shown subset of markdown. ",
+    # "url": "https://discordapp.com",
+    # "image_url": "https://cdn.discordapp.com/embed/avatars/0.png"
 }
 
 
@@ -119,4 +121,18 @@ def welcome_message_embed():
         embed: discord.Embed = discord.Embed(colour=discord.Colour(0xf8e71c),
                                              description=f"Welcome to the server!",
                                              timestamp=datetime.datetime.now(tzinfo))
+    return embed
+
+
+def user_need_to_reg_on_site_massage_embed():
+    embed = discord.Embed(colour=discord.Colour(0xf8e71c),
+                          description="To participate in North Star's event, you first must register! [Click this "
+                                      f"link]({get_env().WEB_BASE_URL}) "
+                                      "to register via Discord. ",
+                          timestamp=datetime.datetime.now(tzinfo))
+
+    embed.add_field(name="*",
+                    value="After clicking the link, you will be redirected to Discord's site to authenticate and "
+                          "redirected again to the [North Star](https://www.northstaresports.gg/home) website.")
+    embed.add_field(name="*", value="After registering, please resubmit your proof using the !proof command")
     return embed
