@@ -131,8 +131,9 @@ def user_need_to_reg_on_site_massage_embed():
                                       "to register via Discord. ",
                           timestamp=datetime.datetime.now(tzinfo))
 
-    embed.add_field(name="*",
+    embed.add_field(name="*", inline=False,
                     value="After clicking the link, you will be redirected to Discord's site to authenticate and "
-                          "redirected again to the [North Star](https://www.northstaresports.gg/home) website.")
-    embed.add_field(name="*", value="After registering, please resubmit your proof using the !proof command")
+                          f"redirected again to the [North Star]({get_env().WEB_BASE_URL}/authredirect/discord) website.")
+    embed.add_field(name="*", inline=False, value="After registering, please resubmit your proof using the !proof "
+                                                  "command")
     return embed
