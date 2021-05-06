@@ -127,13 +127,13 @@ def welcome_message_embed():
 def user_need_to_reg_on_site_massage_embed():
     embed = discord.Embed(colour=discord.Colour(0xf8e71c),
                           description="To participate in North Star's event, you first must register! [Click this "
-                                      f"link]({get_env().WEB_BASE_URL}) "
+                                      f"link]({get_env().WEB_BASE_URL}/authredirect/discord) "
                                       "to register via Discord. ",
                           timestamp=datetime.datetime.now(tzinfo))
 
-    embed.add_field(name="*", inline=False,
+    embed.add_field(name="***", inline=False,
                     value="After clicking the link, you will be redirected to Discord's site to authenticate and "
-                          f"redirected again to the [North Star]({get_env().WEB_BASE_URL}/authredirect/discord) website.")
-    embed.add_field(name="*", inline=False, value="After registering, please resubmit your proof using the !proof "
+                          f"redirected again to the [North Star]({get_env().WEB_BASE_URL}) website.")
+    embed.add_field(name="***", inline=False, value="After registering, please resubmit your proof using the !proof "
                                                   "command")
     return embed
