@@ -135,5 +135,5 @@ def user_need_to_reg_on_site_massage_embed():
                     value="After clicking the link, you will be redirected to Discord's site to authenticate and "
                           f"redirected again to the [North Star]({get_env().WEB_BASE_URL}) website.")
     embed.add_field(name="***", inline=False, value="After registering, please resubmit your proof using the !proof "
-                                                  "command")
+                                                    "command")
     return embed
