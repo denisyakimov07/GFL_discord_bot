@@ -18,7 +18,6 @@ log = logging.getLogger('Discord Bot')
 async def proof(ctx: discord.ext.commands.Context):
     server_settings = discord_server_settings_service.get_settings_by_guild_id(ctx.guild.id)
     channel_id = server_settings.get_special_channel(SpecialChannelEnum.current_event)
-    user = get_user_by_discord_member(ctx.message.author)
     if int(channel_id) != ctx.channel.id:
         return
 
@@ -29,7 +28,7 @@ async def proof(ctx: discord.ext.commands.Context):
         await ctx.message.delete()
         await ctx.send(f'<@!{ctx.message.author.id}> Please add a picture attachment')
         return
-
+    user = get_user_by_discord_member(ctx.message.author)
     if user is None:
         await ctx.message.author.send(embed=user_need_to_reg_on_site_massage_embed())
         await ctx.message.delete()
