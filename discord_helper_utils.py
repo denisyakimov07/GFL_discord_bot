@@ -36,7 +36,8 @@ def get_channel_by_special_channel(
 async def try_to_verify_member(
         channel_id: int,
         from_member: discord.Member,
-        to_member: discord.Member
+        to_member: discord.Member,
+        message: discord.Message
 ) -> Union[str, bool]:
     guild = from_member.guild
     verify_channel = get_channel_by_special_channel(guild, SpecialChannelEnum.verify)
@@ -65,6 +66,7 @@ async def try_to_verify_member(
 
     verify_member(from_member, to_member)
     if verify_role in to_member.roles:
+        await message.delete()
         return f'User <@!{to_member.id}> is already verified (<@!{from_member.id}>)'
 
     await to_member.add_roles(verify_role)
