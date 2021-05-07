@@ -33,6 +33,7 @@ async def proof(ctx: discord.ext.commands.Context):
     user = get_user_by_discord_member(ctx.message.author)
     if user is None:
         await ctx.message.author.send(embed=user_need_to_reg_on_site_massage_embed())
+        await ctx.message.delete()
         await ctx.send(embed=registered_user_embed(ctx.message.author))
         return
     else:
@@ -46,4 +47,3 @@ async def proof(ctx: discord.ext.commands.Context):
                                      message=ctx.message.content)
         )
         await ctx.send(embed=submitted_proof_embed(member=ctx.message.author, att_url=ctx.message.attachments[0].url))
-        await ctx.message.delete()
