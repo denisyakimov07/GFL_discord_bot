@@ -137,3 +137,13 @@ def user_need_to_reg_on_site_massage_embed():
     embed.add_field(name="***", inline=False, value="After registering, please resubmit your proof using the !proof "
                                                     "command")
     return embed
+
+
+def submitted_proof_embed(member: discord.Member, att_url):
+    embed = discord.Embed(colour=discord.Colour(0x82ff00), description=f"<@!{member.id}> "
+                          f"Proof has been submitted for review.",
+                          timestamp=datetime.datetime.now(tzinfo))
+
+    embed.set_thumbnail(url=f"{att_url}")
+    embed.set_author(name=f"{member}", icon_url=f"{member.avatar_url}")
+    return embed

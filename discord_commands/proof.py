@@ -6,7 +6,7 @@ from discord.ext import commands
 
 from api import model_api_service
 from discord_client import client
-from discord_embeds import user_need_to_reg_on_site_massage_embed
+from discord_embeds import user_need_to_reg_on_site_massage_embed, submitted_proof_embed
 from discord_server_settings_service import discord_server_settings_service
 from esport_api import get_user_by_discord_member
 from models import SpecialChannelEnum, GameEventProof, GameEvent
@@ -45,4 +45,5 @@ async def proof(ctx: discord.ext.commands.Context):
             GameEventProof.construct(user=user.id, url=ctx.message.attachments[0].url, event=first_event.id,
                                      message=ctx.message.content)
         )
-        await ctx.send(f'<@!{ctx.message.author.id}> Proof has been submitted for review')
+        await ctx.send(embed=submitted_proof_embed(member=ctx.message.author, att_url=ctx.message.attachments[0].url))
+        # await ctx.send(f'<@!{ctx.message.author.id}> Proof has been submitted for review')
