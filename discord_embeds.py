@@ -141,9 +141,24 @@ def user_need_to_reg_on_site_massage_embed():
 
 def submitted_proof_embed(member: discord.Member, att_url):
     embed = discord.Embed(colour=discord.Colour(0x82ff00), description=f"<@!{member.id}> "
-                          f"Proof has been submitted for review.",
+                                                                       f"Proof has been submitted for review.",
                           timestamp=datetime.datetime.now(tzinfo))
 
     embed.set_thumbnail(url=f"{att_url}")
     embed.set_author(name=f"{member}", icon_url=f"{member.avatar_url}")
+    return embed
+
+
+def add_attachment_massage_embed(member: discord.Member):
+    embed = discord.Embed(colour=discord.Colour(0xff001f),
+                          description=f'<@!{member.id}> Please add a picture attachment.',
+                          timestamp=datetime.datetime.now(tzinfo))
+    return embed
+
+
+def registered_user_embed(member: discord.Member):
+    embed = discord.Embed(colour=discord.Colour(0xff001f),
+                          description=f'<@!{member.id}> You must be a registered user to submit proof. '
+                                      f'Please check your messages for more details.',
+                          timestamp=datetime.datetime.now(tzinfo))
     return embed

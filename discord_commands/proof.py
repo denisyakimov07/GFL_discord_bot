@@ -6,7 +6,8 @@ from discord.ext import commands
 
 from api import model_api_service
 from discord_client import client
-from discord_embeds import user_need_to_reg_on_site_massage_embed, submitted_proof_embed
+from discord_embeds import user_need_to_reg_on_site_massage_embed, submitted_proof_embed, add_attachment_massage_embed, \
+    registered_user_embed
 from discord_server_settings_service import discord_server_settings_service
 from esport_api import get_user_by_discord_member
 from models import SpecialChannelEnum, GameEventProof, GameEvent
@@ -26,14 +27,15 @@ async def proof(ctx: discord.ext.commands.Context):
 
     if len(ctx.message.attachments) == 0:
         await ctx.message.delete()
+        await ctx.send(embed=add_attachment_massage_embed(ctx.message.author))
         await ctx.send(f'<@!{ctx.message.author.id}> Please add a picture attachment')
         return
+
     user = get_user_by_discord_member(ctx.message.author)
     if user is None:
         await ctx.message.author.send(embed=user_need_to_reg_on_site_massage_embed())
         await ctx.message.delete()
-        await ctx.send(f'<@!{ctx.message.author.id}> You must be a registered user to submit proof. Please check your '
-                       f'messages for more details.')
+        await ctx.send(embed=registered_user_embed(ctx.message.author))
         return
     else:
         first_event = model_api_service.find_one(GameEvent)
@@ -46,4 +48,3 @@ async def proof(ctx: discord.ext.commands.Context):
                                      message=ctx.message.content)
         )
         await ctx.send(embed=submitted_proof_embed(member=ctx.message.author, att_url=ctx.message.attachments[0].url))
-        # await ctx.send(f'<@!{ctx.message.author.id}> Proof has been submitted for review')
