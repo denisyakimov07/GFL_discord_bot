@@ -37,12 +37,12 @@ class AccessToken:
     def refresh_token(self):
         self.token = get_new_access_token()
         self.token_gen_time = time.time()  # When token was made
-        log.info(f"Generate new token token - {self.token}")
+        log.info(f"Generate new token token")
 
     def get_token(self):
         if time.time() > self.token_gen_time + self.TOKEN_TTL:
             # token can be expired.
             self.refresh_token()
-            log.info(f"Token expire - {self.token}")
-        log.debug(f"Return token - {self.token}")
+            log.info(f"Token expire")
+        log.debug(f"Return token")
         return self.token
