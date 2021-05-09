@@ -27,14 +27,17 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
     guild = client.get_guild(payload.guild_id)
     verify_channel = get_channel_by_special_channel(guild, SpecialChannelEnum.verify)
 
-    if verify_channel is not None and payload.channel_id == verify_channel.id and str(payload.emoji.name) == '✅' and client.user.id != payload.user_id:
+    if verify_channel is not None and payload.channel_id == verify_channel.id and str(
+            payload.emoji.name) == '✅' and client.user.id != payload.user_id:
         message = await verify_channel.fetch_message(payload.message_id)
         try:
             member_to_verify: discord.Member = await guild.fetch_member(int(message.embeds[0].footer.text))
-            error_msg_or_success = await try_to_verify_member(payload.channel_id, payload.member, member_to_verify, message)
+            error_msg_or_success = await try_to_verify_member(payload.channel_id, payload.member, member_to_verify,
+                                                              message)
             if error_msg_or_success is True:
                 await message.delete()
                 await verify_channel.send(embed=discord_embeds.embeds_for_verify_user(member_to_verify, payload.member))
+                #TODO need new welcome massage
                 # await send_message_to_verified_user(member_to_verify)
             elif isinstance(error_msg_or_success, str):
                 await verify_channel.send(error_msg_or_success)
@@ -42,7 +45,6 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
             await message.delete()
             log.error(f"User was not found - {ex}")
 
-            
 
     elif payload.message_id == roles_assignment_setup['massage_id']:
         try:
