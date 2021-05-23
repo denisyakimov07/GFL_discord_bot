@@ -19,6 +19,8 @@ roles_assignment_setup = {"massage_id": 828861933280428043,
                                             "HuntShowdown": 824846176154943499,
                                             "Minecraft": 818824441903185950,
                                             "EscapeFromTarkov": 824846668406456351,
+                                            "Twitch": 846134093656883300,
+
                                             }}
 
 
@@ -37,7 +39,7 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
             if error_msg_or_success is True:
                 await message.delete()
                 await verify_channel.send(embed=discord_embeds.embeds_for_verify_user(member_to_verify, payload.member))
-                #TODO need new welcome massage
+                # TODO need new welcome massage
                 # await send_message_to_verified_user(member_to_verify)
             elif isinstance(error_msg_or_success, str):
                 await verify_channel.send(error_msg_or_success)
