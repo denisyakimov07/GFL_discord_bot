@@ -8,7 +8,7 @@ from models import SpecialChannelEnum
 
 log = logging.getLogger('DiscordBot')
 
-roles_assignment_setup = {"massage_id": 828861933280428043,
+roles_assignment_setup = {"massage_id": [828861933280428043, 846141151341707314],
                           "emoji_to_role": {"Apex": 818814719854116914,
                                             "WorldofWarcraft": 824845946684571719,
                                             "CallofDuty": 824846357214396477,
@@ -48,7 +48,7 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
             log.error(f"User was not found - {ex}")
 
 
-    elif payload.message_id == roles_assignment_setup['massage_id']:
+    elif payload.message_id in roles_assignment_setup['massage_id']:
         try:
             if payload.emoji.name in roles_assignment_setup["emoji_to_role"]:
                 member_add_role = payload.member
